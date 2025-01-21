@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.sqr {
+ width: 8vmin;
+  height: 8vmin;
+}
+.dragging{
+  cursor: grabbing;
+  z-index: 999;
+}
