@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { pieces, theme } from "./theme";
-import { moveManager } from "./PieceMoves";
+import { checkForCheck, moveManager, setData } from "./PieceMoves";
 let md = false;
 let pc = " -1";
 function boardPositionToGlobalPosition(k: any) {
@@ -10,10 +10,10 @@ function boardPositionToGlobalPosition(k: any) {
 	return {
 		top: "calc(50vh - " + y + "vmin)",
 		left: "calc(50vw - " + x + "vmin)",
-    opacity:k==-1?0:1,
-    pointerEvents:turn&&board[k]<"a"||!turn&&board[k]>="a"?"auto":"none",
-    transitionDuration:k==-1?"0s":"0.2s"
-
+		pointerEvents:
+			(turn && board[k] < "a") || (!turn && board[k] >= "a")
+				? "auto"
+				: "none",
 	};
 }
 let board = "RNBQKBNRPPPPPPPP--------------------------------pppppppprnbqkbnr";
@@ -32,21 +32,98 @@ let pieceKeys = [
 	[60],
 ];
 let sel = -1;
+let to = -1;
+let from = -1;
 let turn = true;
 let mvSq = new Array(64).fill(0);
+let check = false;
+let enpassant = [-1,-1];
+let castling = [true,true,true,true];
+let fiftyMove = 0;
+let moves=0;
 function moveTo(i: any) {
 	if (i < 0 || i > 63) return false;
 	if (mvSq[i] == 0) return false;
+	let enp=-1
+	let temp = board.split("");
+	let piece=board[sel];
+	let cast=NaN;
+	if(enpassant[0]!=-1){
+		if(i==(enpassant[0]+(turn?1:-1))*8+enpassant[1]){
+			
+			temp[enpassant[0]*8+enpassant[1]]="-";
+			enp=enpassant[0]*8+enpassant[1];
+			
+		}
+	}
+	if(piece.toLowerCase()=="k"&&Math.abs(sel-i)==2){
+		console.log("castling",i);
+		if(i%8==6){
+			temp[i+1]="-";
+			temp[i-1]=turn?"R":"r";
+			cast=i+1;
+		}
+		if(i%8==2){
+			temp[i-2]="-";
+			temp[i+1]=turn?"R":"r";
+			cast=i-2;
+		}
+	}
+	if(piece.toLowerCase()=="r"){
+		
+		if(sel==pieceKeys[turn?1:7][0]){
+			castling[turn?0:2]=false;
+		}
+		if(sel==pieceKeys[turn?1:7][1]){
+			castling[turn?1:3]=false;
+		}
+	}
+
 	pieceKeys = pieceKeys.map((x: any) => {
-		return x.map((y: any) => (y == i ? -1 : y == sel ? i : y));
+		return x.map((y: any) => ((y == i||y==enp) ? -1 : y == sel ? i :(y==cast)?[y+3,y-2][y%2]: y));
 	});
 	mvSq = new Array(64).fill(0);
 	turn = !turn;
-	let temp = board.split("");
+	
+	
+	enpassant=[-1,-1];
+
+	if(piece.toLowerCase()=="p"){
+		if(Math.abs(sel-i)==16)
+		enpassant=[Math.floor(i/8),i%8];
+		fiftyMove=0;
+	}
+	else if(board[i]=="-"){
+		fiftyMove++;
+		
+	}
+	else{
+		fiftyMove=0;
+	}
+	if(piece.toLowerCase()=="k"){
+		castling[0+(turn?2:0)]=false;
+		castling[1+(turn?2:0)]=false;
+	}
+	
+	console.log(castling);
+	if(turn){
+		moves++;
+	}
+	to = i;
+	from = sel;
 	temp[i] = temp[sel];
 	temp[sel] = "-";
 	board = temp.join("");
+	check = checkForCheck(board, turn);
+	setData(check,enpassant,castling,fiftyMove,moves);
 	return true;
+}
+function normalize(x: number, y: number, str: string) {
+	str = str
+		.split(" ")
+		.map((z, i) => parseInt(z) + (i % 2 == 0 ? x : y))
+		.join(" ");
+	return str;
 }
 function App() {
 	const [clickCount, setClickCount] = useState(0);
@@ -94,6 +171,7 @@ function App() {
 			piece.style.left = val.left;
 		});
 	}, []);
+	console.log(board)
 	return (
 		<>
 			<div className="fixed flex w-full h-full items-center justify-center flex-col">
@@ -104,13 +182,15 @@ function App() {
 					viewBox="0 0 640 640"
 					fill="none">
 					{moveableSquares.map((_, i) => {
+						let x = (i % 8) * 80;
+						let y = 560 - Math.floor(i / 8) * 80;
 						return (
-							<>
+							<g key={"sq" + i}>
 								<rect
 									id={"boardsq" + i}
 									key={i}
-									x={(i % 8) * 80}
-									y={560 - Math.floor(i / 8) * 80}
+									x={x}
+									y={y}
 									width="80"
 									height="80"
 									fill={
@@ -118,10 +198,80 @@ function App() {
 											? theme.whiteBoard
 											: theme.blackBoard
 									}
+									className="duration-200"
 									stroke="#000"
 									strokeWidth="1"
 								/>
-                {
+
+								{
+									<g
+										id="Page-1"
+										stroke="none"
+										className=" pointer-events-none"
+										strokeWidth="1"
+										fill="none"
+										fillRule="evenodd">
+										<g
+											id="diagonal-stripes"
+											className="duration-200"
+											fill={
+												check &&
+												((turn &&
+													pieceKeys[5][0] == i) ||
+													(!turn &&
+														pieceKeys[11][0] ==
+															i)) &&
+												sel != i
+													? "#312121"
+													: sel == i ||
+													  from == i ||
+													  to == i
+													? (i + Math.floor(i / 8)) %
+															2 ==
+													  0
+														? theme.whiteBoard +
+														  (to == i
+																? "80"
+																: from == i
+																? "80"
+																: "FF")
+														: theme.blackBoard +
+														  (to == i
+																? "80"
+																: from == i
+																? "80"
+																: "FF")
+													: "#0000"
+											}>
+											<polygon
+												points={normalize(
+													x,
+													y,
+													"2 38 38 2 19 2 2 19"
+												)}></polygon>
+											<polygon
+												points={normalize(
+													x,
+													y,
+													"2 78 78 2 57 2 2 57"
+												)}></polygon>
+											<polygon
+												points={normalize(
+													x,
+													y,
+													"19 78 78 19 78 38 38 78"
+												)}></polygon>
+											<polygon
+												points={normalize(
+													x,
+													y,
+													"78 78 78 57 57 78"
+												)}></polygon>
+										</g>
+									</g>
+								}
+
+								{
 									<rect
 										x={(i % 8) * 80 + 32}
 										y={592 - Math.floor(i / 8) * 80}
@@ -133,90 +283,87 @@ function App() {
 										opacity={moveableSquares[i]}
 									/>
 								}
-								
-							</>
+							</g>
 						);
 					})}
 				</svg>
 				{pieceKeys.map((x: any, j: any) => {
 					return x.map((k: any, i: any) => {
 						return (
-							<>
-								{pieces[
-									`${j < 6 ? "0" : "1"}${(
-										j % 6
-									).toString()}` as keyof typeof pieces
-								]({
-									onMouseDown: (e: any) => {
-										if (
-											!(
-												(turn && j < 6) ||
-												(!turn && j >= 6)
-											)
-										)
-											return;
-										mvSq =
-											moveManager(k, board, turn) ||
-											new Array(64).fill(0);
-										setMoveableSquares(mvSq);
-										e.currentTarget.style.pointerEvents =
-											"none";
-										e.currentTarget.style.zIndex =
-											clickCount + 1;
-										setClickCount(clickCount + 1);
-										sel = k;
-										md = true;
-										pc =
-											`${j < 6 ? "0" : "1"}${(
-												j % 6
-											).toString()}` + i;
-									},
-
-									id:
+							<div key={"test"+i+" "+j}>
+								{k != -1 ? (
+									pieces[
 										`${j < 6 ? "0" : "1"}${(
 											j % 6
-										).toString()}` + i,
-									style: boardPositionToGlobalPosition(k),
+										).toString()}` as keyof typeof pieces
+									]({
+										onMouseDown: (e: any) => {
+											if (
+												!(
+													(turn && j < 6) ||
+													(!turn && j >= 6)
+												)
+											)
+												return;
+											mvSq =
+												moveManager(k, board, turn) ||
+												new Array(64).fill(0);
+											setMoveableSquares(mvSq);
+											e.currentTarget.style.pointerEvents =
+												"none";
+											e.currentTarget.style.zIndex =
+												clickCount + 1;
+											setClickCount(clickCount + 1);
+											sel = k;
+											md = true;
+											pc =
+												`${j < 6 ? "0" : "1"}${(
+													j % 6
+												).toString()}` + i;
+										},
 
-									className: "duration-200 fixed z-[0]",
-									width: "8vmin",
-									height: "8vmin",
-								})}
+										id:
+											`${j < 6 ? "0" : "1"}${(
+												j % 6
+											).toString()}` + i,
+										style: boardPositionToGlobalPosition(k),
 
-							</>
+										className: "duration-200 fixed z-[0]",
+										width: "8vmin",
+										height: "8vmin",
+									})
+								) : (
+									<></>
+								)}
+							</div>
 						);
 					});
 				})}
-        <svg
+				<svg
 					id="mainboard2"
 					xmlns="http://www.w3.org/2000/svg"
 					className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 "
 					viewBox="0 0 640 640"
-          style={{
-            zIndex:clickCount-1
-          }}
+					style={{
+						zIndex: clickCount - 1,
+					}}
 					fill="none">
 					{moveableSquares.map((_, i) => {
 						return (
-							<>
-                {
-									<rect
-										x={(i % 8) * 80 + 32}
-										y={592 - Math.floor(i / 8) * 80}
-										width="16"
-										height="16"
-										rx="999"
-										fill={theme.move}
-										className="duration-200 pointer-events-none"
-										opacity={moveableSquares[i]}
-									/>
-								}
-								
-							</>
+							<rect
+								x={(i % 8) * 80 + 32}
+								y={592 - Math.floor(i / 8) * 80}
+								width="16"
+								height="16"
+								rx="999"
+								key={"test2"+i}
+								fill={theme.move}
+								className="duration-200 pointer-events-none"
+								opacity={moveableSquares[i]}
+							/>
 						);
 					})}
 				</svg>
-        
 			</div>
 		</>
 	);
