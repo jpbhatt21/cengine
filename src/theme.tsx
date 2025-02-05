@@ -3,9 +3,9 @@ export const theme = {
 	whiteBoard: "#313131",
 	blackPiece: "#262626",
 	whitePiece: "#4c4c4c",
-	pieceOutline: "#9496AB",
-	move: "#707070",
-    sel:"#262626"
+	pieceOutline: "#393939",
+	move: "#808080",
+    sel:"#202020"
 };
 export const pieces = {
 	"00": (props: any) => {
