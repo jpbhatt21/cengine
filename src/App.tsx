@@ -15,7 +15,7 @@ function App() {
 	// } else if (check) {
 	// 	console.log("Check");
 	// }
-	const [update, setUpdate] = useState(0);
+	const [_, setUpdate] = useState(0);
 	let moveRecord = get.moveRecord();
 	let moveCount =get.moveCount();
 	let check = get.check();

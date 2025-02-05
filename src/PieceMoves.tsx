@@ -15,23 +15,17 @@ const pieceDict: {
 	q: queenMoves,
 	k: kingMoves,
 };
-let check = false;
 let enpassant = [-1, -1];
 let castling = [true, true, true, true];
-let fiftyMove = 0;
-let moves = 0;
 export function setData(
-	chk: boolean,
+
 	enp: number[],
 	cast: boolean[],
-	fif: number,
-	mov: number
+
 ) {
-	check = chk;
 	enpassant = enp;
 	castling = cast;
-	fiftyMove = fif;
-	moves = mov;
+	
 }
 function deepCopy(arr: any) {
 	return JSON.parse(JSON.stringify(arr));
@@ -351,13 +345,6 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 		.map((_, i) => board.slice(i * 8, (i + 1) * 8).split(""));
 	let emptySpaces = boardMatrix.map((x) =>
 		x.map((y: any) => (y == "-" ? true : false))
-	);
-	let myPieces = boardMatrix.map((x) =>
-		x.map((y: any) =>
-			(turn ? y.toLowerCase() : y.toUpperCase()) == y && y != "-"
-				? true
-				: false
-		)
 	);
 	let enemyPieces = boardMatrix.map((x) =>
 		x.map((y: any) =>

@@ -307,7 +307,7 @@ function Board({setUpdate}:any) {
 								6
 							).toString()}` as keyof typeof pieces
 						]({
-							onClick: (e: any) => {
+							onClick: () => {
 								let piece = turn ? "rnbq"[i] : "RNBQ"[i];
 								let temp = board.split("");
 

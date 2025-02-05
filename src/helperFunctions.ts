@@ -223,7 +223,7 @@ export function moveTo(i: any, piecex: any) {
     } else {
         vars.currentMove = mv;
     }
-    setData(vars.check, vars.enpassant, vars.castling, vars.fiftyMove, vars.moves);
+    setData( vars.enpassant, vars.castling);
     vars.pc = "-1";
     set.all(vars);
     setTimeout(() => {let mvr=document.getElementById("moveRecord");
