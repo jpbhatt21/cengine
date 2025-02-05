@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { pieces, theme } from "./theme";
-import { checkForCheck, moveManager, setData } from "./PieceMoves";
+import { checkForCheck, checkForAvailableMoves, moveManager, setData } from "./PieceMoves";
 let md = false;
 let pc = " -1";
 function boardPositionToGlobalPosition(k: any) {
@@ -15,6 +15,7 @@ function boardPositionToGlobalPosition(k: any) {
   };
 }
 let board = "RNBQKBNRPPPPPPPP--------------------------------pppppppprnbqkbnr";
+let moveRecord:string[][]=[]
 let pieceKeys = [
   [8, 9, 10, 11, 12, 13, 14, 15],
   [0, 7],
@@ -36,6 +37,7 @@ let promoteKeys = [
 let sel = -1;
 let to = -1;
 let from = -1;
+let moveCount = 20;
 let turn = true;
 let mvSq = new Array(64).fill(0);
 let check = false;
@@ -45,14 +47,32 @@ let fiftyMove = 0;
 let moves = 0;
 let promoting = false;
 let promotion=-1
+let currentMove=""
 function moveTo(i: any) {
   if(promoting)return false
   if (i < 0 || i > 63) return false;
   if (mvSq[i] == 0) return false;
+  let mv=""
   let enp = -1;
   let temp = board.split("");
   let piece = board[sel];
   let cast = NaN;
+  let fromFile=Math.floor(sel/8)+1
+  let toFile=Math.floor(i/8)+1
+  let fromRank="abcdefgh"[sel%8]
+  let toRank="abcdefgh"[i%8]
+  let pieceType = piece.toLowerCase();
+  let captured = board[i];
+  if(pieceType!="p")
+  mv+=pieceType.toUpperCase()
+  if(piece.toLowerCase()=="p"&&captured!="-"){
+    mv+=fromRank
+  }
+  if(captured!="-"){
+    mv+="x"
+  }
+  mv+=toRank+""+toFile
+
   promotion=-1;
   promoting=false;
   if((piece=="p"&&i<8)|| (piece=="P"&&i>55)){
@@ -69,11 +89,13 @@ function moveTo(i: any) {
     if (i % 8 == 6) {
       temp[i + 1] = "-";
       temp[i - 1] = turn ? "R" : "r";
+      mv="O-O"
       cast = i + 1;
     }
     if (i % 8 == 2) {
       temp[i - 2] = "-";
       temp[i + 1] = turn ? "R" : "r";
+      mv="O-O-O"
       cast = i - 2;
     }
   }
@@ -124,6 +146,20 @@ function moveTo(i: any) {
   temp[sel] = "-";
   board = temp.join("");
   check = checkForCheck(board, turn);
+  moveCount=checkForAvailableMoves(board,turn)
+  if(check&&moveCount==0)
+  mv+="#"
+  else if(check)
+  mv+="+"
+  if(!promoting){
+    if(!turn)
+    moveRecord.push([mv])
+    else
+    moveRecord[moveRecord.length-1].push(mv)
+  }
+  else{
+    currentMove=mv
+  }
   setData(check, enpassant, castling, fiftyMove, moves);
   return true;
 }
@@ -135,8 +171,17 @@ function normalize(x: number, y: number, str: string) {
   return str;
 }
 function App() {
+  console.log(moveRecord)
   const [clickCount, setClickCount] = useState(0);
   const [moveableSquares, setMoveableSquares] = useState(new Array(64).fill(0));
+  if(moveCount==0&&check){
+    console.log("Checkmate")
+  }
+  else if(moveCount==0){
+    console.log("Stalemate")
+  }else if(check){
+    console.log("Check")
+  }
   useEffect(() => {
     document.addEventListener("mousemove", (e) => {
       let piece = document.getElementById(pc);
@@ -344,6 +389,7 @@ function App() {
                 promotion=-1
                 turn=!turn
                 check=checkForCheck(board,turn)
+                moveCount=checkForAvailableMoves(board,turn)
               },
 
               id: `${turn ? "0" : "1"}${((i + 1) % 6).toString()}prom` + i,

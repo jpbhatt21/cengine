@@ -311,6 +311,22 @@ function kingMoves(
 	    }
   return moves;
 }
+export function checkForAvailableMoves(board:any,turn:boolean){
+	let boardMatrix = "00000000".split("").map((_, i) => board.slice(i * 8, (i + 1) * 8).split(""));
+	let emptySpaces = boardMatrix.map((x) => x.map((y: any) => (y == "-" ? true : false)));
+	let myPieces = boardMatrix.map((x) => x.map((y: any) => (turn ? y.toUpperCase() : y.toLowerCase()) == y && y != "-" ? true : false));
+	let enemyPieces = boardMatrix.map((x) => x.map((y: any) => (turn ? y.toLowerCase() : y.toUpperCase()) == y && y != "-" ? true : false));
+	let moveCount = 0;
+	for (let i = 0; i < 64; i++) {
+	  if (board[i] == "-") continue;
+	  if (turn && board[i] < "a") {
+		moveCount += pieceDict[board[i].toLowerCase()](i, boardMatrix, enemyPieces, emptySpaces, turn, true).length;
+	  } else if (!turn && board[i] >= "a") {
+		moveCount += pieceDict[board[i].toLowerCase()](i, boardMatrix, enemyPieces, emptySpaces, turn, true).length;
+	  }
+	}
+	return moveCount
+}
 
 export function checkForCheck(board: any, turn: boolean) {
   let boardMatrix = "00000000"
