@@ -379,7 +379,6 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 			moveCount += mv.length;
 		}
 		if (moveCount > 0) {
-			console.log(mv,i,board[i])
 			break
 		}
 	}

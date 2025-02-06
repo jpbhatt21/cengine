@@ -2,6 +2,7 @@ import { checkForAvailableMoves, checkForCheck, moveManager, setData } from "./P
 import { get, set } from "./variables";
 
 export function getFEN(){
+
     let board=get.board();
     let castling=get.castling();
     let enpassant=get.enpassant();
@@ -10,7 +11,7 @@ export function getFEN(){
     let turn=get.turn();
     let boardCurSt: any = "00000000"
         .split("")
-        .map((_, i) => board.slice(i * 8, (i + 1) * 8).split(""))
+        .map((_, i) => board.slice(i * 8, (i + 1) * 8).split("")).reverse()
         .map((x: any) => {
             let count = 0;
             let temp = "";
@@ -22,7 +23,7 @@ export function getFEN(){
                         temp += count.toString();
                         count = 0;
                     }
-                    temp += x[i];
+                    temp += x[i]>="a"?x[i].toUpperCase():x[i].toLowerCase();
                 }
             }
             if (count > 0) {
@@ -227,7 +228,6 @@ export function moveTo(i: any, piecex: any) {
     vars.pc = "-1";
     set.all(vars);
     setTimeout(() => {let mvr=document.getElementById("moveRecord");
-        console.log(mvr);
         mvr?.scrollTo({
             top: mvr.scrollHeight,
             behavior: "smooth",

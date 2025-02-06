@@ -144,13 +144,13 @@ function Board({setUpdate}:any) {
 												  to == i
 												? (i + Math.floor(i / 8)) % 2 ==
 												  0
-													? "#013131" +
+													?theme.whiteBoard+
 													  (to == i
 															? "80"
 															: from == i
 															? "80"
 															: "FF")
-													: "#0b2d2d" +
+													:theme.blackBoard +
 													  (to == i
 															? "80"
 															: from == i
