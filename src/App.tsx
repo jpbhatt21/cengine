@@ -1,9 +1,11 @@
 import { theme } from "./theme";
-import { get } from "./variables";
+import { get, set } from "./variables";
 import Board from "./Board";
-import { useState } from "react";
-import { getEval } from "./helperFunctions";
-getEval()
+import { useEffect, useState } from "react";
+import { getEval, moveTo, promote } from "./helperFunctions";
+import { moveManager } from "./PieceMoves";
+getEval();
+
 function App() {
 	// let tempx = moveRecord.map((x, i) => i + 1 + ". " + x.join(" ")).join(" ");
 	// console.log(tempx);
@@ -16,23 +18,128 @@ function App() {
 	// } else if (check) {
 	// 	console.log("Check");
 	// }
+	useEffect(() => {
+		
+			setInterval(() => {
+				let move = get.bestMove();
+				if (move == "a1a1"||!get.autoplay()) return;
+				let sp =
+					move.length > 4 && "rnbq".indexOf(move[4]) != -1
+						? move[4]
+						: null;
+
+				let from = move.charCodeAt(0) - 97 + parseInt(move[1]) * 8 - 8;
+				let to = move.charCodeAt(2) - 97 + parseInt(move[3]) * 8 - 8;
+				let pieceCode = get.board()[from];
+				let piece: any =
+					(pieceCode < "a" ? "1" : "0") +
+					"prnbqk".indexOf(pieceCode.toLowerCase()) +
+					get
+						.pieceKeys()
+						[
+							"prnbqk".indexOf(pieceCode.toLowerCase()) +
+								(pieceCode < "a" ? 6 : 0)
+						].indexOf(from);
+				set.sel(from);
+				set.mvSq(
+					moveManager(from, get.board(), get.turn()) ||
+						new Array(64).fill(0)
+				);
+				setUpdate((x) => x + 1);
+				moveTo(to, document.getElementById(piece));
+				setUpdate((x) => x + 1);
+				move = "a1a1";
+				if (sp) {
+					let i = "rnbq".indexOf(sp);
+					promote(i, get.turn() ? sp : sp.toUpperCase());
+				}
+				move = "a1a1";
+				setUpdate((x) => x + 1);
+			}, 500);
+	}, []);
 	const [_, setUpdate] = useState(0);
+	if (get.updater() == null) set.updater(setUpdate);
 	let moveRecord = get.moveRecord();
-	let moveCount =get.moveCount();
+	let moveCount = get.moveCount();
 	let check = get.check();
 	let turn = get.turn();
+	let eva = get.curEval();
+	// console.log(get.mvSq())
+	// console.log(get.board(), get.pieceKeys());
+	let evamate = get.curEvalMate();
 	return (
 		<>
 			<div className="fixed flex mts w-full h-full items-center justify-center flex-col">
 				<Board setUpdate={setUpdate} />
-				<div className="fixed w-[75vmin] aspect-square flex-col bg-black bg-opacity-20 flex items-center justify-center text-[7vmin] lexend duration-500 pointer-events-none" style={{zIndex:2147483647,color:theme.move, opacity:moveCount==0?1:0}}>
-                {
-                    moveCount==0&&<>
-                    <label className="flyin">{check?"Checkmate":"Stalemate"}</label>
-                    <label className="flyin text-[4vmin]">{check?turn?"Black Won":"White Won":"Draw"}</label>
-                    </>
-                }
-            </div>
+				<div className=" fixed pointer-events-none flex flex-col justify-center items-center w-[2.5vmin] h-[75vmin] pr-[42.5vmin] right-1/2 ">
+					<div
+						className="h-full w-[2.5vmin] flex border-2 flex-col-reverse"
+						style={{
+							backgroundColor: theme.blackPiece,
+							borderColor: theme.whitePiece,
+						}}>
+						<div
+							className="w-full "
+							style={{
+								backgroundColor: theme.whitePiece,
+								height:
+									50 +
+									(evamate
+										? eva > 0
+											? 50
+											: -50
+										: eva *
+										  5 *
+										  (Math.abs(eva) < 10
+												? 1
+												: 2 /
+												  (0.1 +
+														Math.ceil(
+															Math.abs(eva) / 5
+														)))) +
+									"%",
+								transition: "height 0.5s",
+								transitionTimingFunction: "ease-in-out",
+							}}></div>
+					</div>
+					<div
+						className="w-[10vmin] text-center items-center"
+						style={{
+							color: theme.move,
+						}}>
+						{moveCount == 0
+							? check
+								? turn
+									? "0-1"
+									: "1-0"
+								: "1/2 - 1/2"
+							: evamate
+							? "M"+Math.abs(eva * 100)
+							: eva}
+					</div>
+				</div>
+				<div
+					className="fixed w-[75vmin] aspect-square flex-col bg-black bg-opacity-20 flex items-center justify-center text-[7vmin] lexend duration-500 pointer-events-none"
+					style={{
+						zIndex: 2147483647,
+						color: theme.move,
+						opacity: moveCount == 0 ? 1 : 0,
+					}}>
+					{moveCount == 0 && (
+						<>
+							<label className="flyin">
+								{check ? "Checkmate" : "Stalemate"}
+							</label>
+							<label className="flyin text-[4vmin]">
+								{check
+									? turn
+										? "Black Won"
+										: "White Won"
+									: "Draw"}
+							</label>
+						</>
+					)}
+				</div>
 				<div className=" fixed pointer-events-none flex flex-col items-center justify-center w-[50vw] h-[75vmin] pl-[37.5vmin] left-1/2 ">
 					<div
 						id="moveRecord"
@@ -47,7 +154,11 @@ function App() {
 							style={{
 								backgroundColor: theme.sel,
 								borderColor: theme.whitePiece,
-							}}>
+							}}
+							onClick={()=>{
+								set.autoplay(!get.autoplay())
+							}}
+							>
 							Moves
 						</label>
 						{moveRecord.map((x, i) => (
@@ -85,7 +196,7 @@ function App() {
 											backgroundColor:
 												i % 2 == 0
 													? theme.blackBoard
-													: theme.blackPiece, 
+													: theme.blackPiece,
 										}}
 										className="w-[45%] fadein py-1  text-center"
 										key={"move" + i + j}>
@@ -102,7 +213,6 @@ function App() {
 							}}></div>
 					</div>
 				</div>
-
 			</div>
 		</>
 	);

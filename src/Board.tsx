@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { get, set } from "./variables";
-import { boardPositionToGlobalPosition, clearPieces, getEval, moveTo, normalize } from "./helperFunctions";
+import {
+	boardPositionToGlobalPosition,
+	clearPieces,
+	getArrowPos,
+	moveTo,
+	normalize,
+	promote,
+} from "./helperFunctions";
 import { pieces, theme } from "./theme";
-import { checkForAvailableMoves, checkForCheck, moveManager } from "./PieceMoves";
+import { moveManager } from "./PieceMoves";
 
-function Board({setUpdate}:any) {
-    
+function Board({ setUpdate }: any) {
 	const [clickCount, setClickCount] = useState(0);
 	const [moveableSquares, setMoveableSquares] = useState(
 		new Array(64).fill(0)
@@ -17,15 +23,12 @@ function Board({setUpdate}:any) {
 	let md = get.md();
 	let pc = get.pc();
 	let board = get.board();
-	let moveRecord = get.moveRecord();
 	let pieceKeys = get.pieceKeys();
 	let promoteKeys = get.promoteKeys();
 	let turn = get.turn();
-	let moveCount = get.moveCount();
 	let mvSq = get.mvSq();
 	let promoting = get.promoting();
 	let promotion = get.promotion();
-	let currentMove = get.currentMove();
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
@@ -54,12 +57,12 @@ function Board({setUpdate}:any) {
 
 			let val1 = boardPositionToGlobalPosition(to);
 			let val2 = boardPositionToGlobalPosition(i);
-			let boox:boolean = moveTo(to, piece) ;
+			let boox: boolean = moveTo(to, piece);
 
 			setMoveableSquares(get.mvSq());
-            setUpdate((prev:any)=>prev+1);
-            // console.log(setMoveRecord);
-            // setMoveRecord(get.moveRecord());
+			setUpdate((prev: any) => prev + 1);
+			// console.log(setMoveRecord);
+			// setMoveRecord(get.moveRecord());
 			if (!piece) {
 				return;
 			}
@@ -78,8 +81,10 @@ function Board({setUpdate}:any) {
 			piece.style.transitionDuration = "0.2s";
 
 			let val = boox ? val1 : val2;
-			piece.style.top = val.top;
-			piece.style.left = val.left;
+			if (val) {
+				piece.style.top = val.top;
+				piece.style.left = val.left;
+			}
 			let clearAllTD = get.clearAllTD();
 			if (clearAllTD) {
 				clearTimeout(clearAllTD);
@@ -91,6 +96,7 @@ function Board({setUpdate}:any) {
 			set.clearAllTD(clearAllTD);
 		});
 	}, []);
+
 	return (
 		<>
 			<svg
@@ -105,7 +111,6 @@ function Board({setUpdate}:any) {
 					return (
 						<g key={"sq" + i}>
 							<rect
-                            
 								id={"boardsq" + i}
 								key={i}
 								x={x}
@@ -126,9 +131,7 @@ function Board({setUpdate}:any) {
 								<g
 									id="Page-1"
 									stroke="none"
-									className=" pointer-events-none"
-									
-									>
+									className=" pointer-events-none">
 									<g
 										id="diagonal-stripes"
 										className="duration-500"
@@ -144,13 +147,13 @@ function Board({setUpdate}:any) {
 												  to == i
 												? (i + Math.floor(i / 8)) % 2 ==
 												  0
-													?theme.whiteBoard+
+													? theme.whiteBoard +
 													  (to == i
 															? "80"
 															: from == i
 															? "80"
 															: "FF")
-													:theme.blackBoard +
+													: theme.blackBoard +
 													  (to == i
 															? "80"
 															: from == i
@@ -231,18 +234,33 @@ function Board({setUpdate}:any) {
 						</g>
 					);
 				})}
-                <rect
-                width={640}
-                height={640}
-                stroke={theme.pieceOutline}
-                strokeWidth={5}
-                ></rect>
+
+				<rect
+					width={640}
+					height={640}
+					stroke={theme.pieceOutline}
+					strokeWidth={5}></rect>
+			</svg>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 z-[2]"
+				viewBox="0 0 640 640"
+				fill="none">
+				{!get.autoplay() && (
+					<path
+						fill="#5b5b5b"
+						className=" pointer-events-none  fad ein"
+						key={get.bestMove() + " " + get.moveRecord().length}
+						style={{ animationDuration: "0.15s" }}
+						d={getArrowPos(get.bestMove())}></path>
+				)}
 			</svg>
 			<div id="allPieces">
 				{pieceKeys.map((x: any, j: any) => {
 					return x.map((k: any, i: any) => {
 						return (
 							<div key={"test" + i + " " + j}>
+								
 								{k != -1 ? (
 									pieces[
 										`${j < 6 ? "0" : "1"}${(
@@ -264,8 +282,7 @@ function Board({setUpdate}:any) {
 											setMoveableSquares(mvSq);
 											e.currentTarget.style.pointerEvents =
 												"none";
-											e.currentTarget.style.zIndex =
-												clickCount + 1;
+											e.currentTarget.style.zIndex = 4;
 											setClickCount(clickCount + 1);
 											sel = k;
 											md = true;
@@ -283,9 +300,22 @@ function Board({setUpdate}:any) {
 											`${j < 6 ? "0" : "1"}${(
 												j % 6
 											).toString()}` + i,
-										style:{...boardPositionToGlobalPosition(k),...((((turn&&j==5)||(!turn && j==11))&&get.check()&&get.moveCount()==0)?{transform:"rotate(90deg)",animationDuration:"0.2s"}:{})},
+										style: {
+											...boardPositionToGlobalPosition(k),
+											...(((turn && j == 5) ||
+												(!turn && j == 11)) &&
+											get.check() &&
+											get.moveCount() == 0
+												? {
+														transform:
+															"rotate(90deg)",
+														animationDuration:
+															"0.2s",
+												  }
+												: {}),
+										},
 
-										className: "fixed z-[0]",
+										className: "fixed z-[2]",
 										width: "8vmin",
 										height: "8vmin",
 									})
@@ -300,7 +330,6 @@ function Board({setUpdate}:any) {
 			{promoting &&
 				promoteKeys[turn ? 0 : 1].map((k, i) => (
 					<div key={"prom" + i} style={{ zIndex: clickCount + 1 }}>
-						
 						{pieces[
 							`${turn ? "0" : "1"}${(
 								(i + 1) %
@@ -308,46 +337,9 @@ function Board({setUpdate}:any) {
 							).toString()}` as keyof typeof pieces
 						]({
 							onClick: () => {
-								let piece = turn ? "rnbq"[i] : "RNBQ"[i];
-								let temp = board.split("");
-
-								temp[(turn ? 56 : 0) + promotion] = piece;
-								board = temp.join("");
-								pieceKeys[(turn ? 1 : 7) + i].push(
-									(turn ? 56 : 0) + promotion
-								);
-								pieceKeys[turn ? 0 : 6] = pieceKeys[
-									turn ? 0 : 6
-								].map((x: any) =>
-									x == (turn ? 56 : 0) + promotion ? -1 : x
-								);
-								mvSq = new Array(64).fill(0);
-								promoting = false;
-								promotion = -1;
-								turn = !turn;
-								check = checkForCheck(board, turn);
-								moveCount = checkForAvailableMoves(board, turn);
-								currentMove += "=" + piece.toUpperCase();
-								if (check && moveCount == 0) currentMove += "#";
-								else if (check) currentMove += "+";
-								if (!turn) moveRecord.push([currentMove]);
-								else
-									moveRecord[moveRecord.length - 1].push(
-										currentMove
-									);
-								set.board(board);
-								set.promoting(promoting);
-								set.promotion(promotion);
-								set.turn(turn);
-								set.check(check);
-								set.moveCount(moveCount);
-								set.currentMove(currentMove);
-								set.moveRecord(moveRecord);
-								set.mvSq(mvSq);
-								set.pieceKeys(pieceKeys);
-								setMoveableSquares(mvSq);
-                                setUpdate((prev:any)=>prev+1);
-								getEval()
+								promote(i, turn ? "rnbq"[i] : "RNBQ"[i]);
+								setMoveableSquares(get.mvSq());
+								setUpdate((prev: any) => prev + 1);
 							},
 
 							id:
@@ -360,7 +352,7 @@ function Board({setUpdate}:any) {
 								animationDelay: `${((i + 1) % 4) * 0.25}s`,
 								pointerEvents: "all",
 							},
-							className: "glow fade-in fixed z-[0]",
+							className: "glow  fixed z-[0]",
 							width: "8vmin",
 							height: "8vmin",
 						})}
@@ -372,7 +364,7 @@ function Board({setUpdate}:any) {
 				className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 "
 				viewBox="0 0 640 640"
 				style={{
-					zIndex: clickCount - 1,
+					zIndex: 2,
 				}}
 				fill="none">
 				{moveableSquares.map((_, i) => {
@@ -383,15 +375,15 @@ function Board({setUpdate}:any) {
 							width="16"
 							height="16"
 							rx="999"
+							id={"move" + i}
 							key={"test2" + i}
 							fill={theme.move}
-							className="duration-200 pointer-events-none"
+							className="duration-200"
 							opacity={moveableSquares[i]}
 						/>
 					);
 				})}
 			</svg>
-            
 		</>
 	);
 }

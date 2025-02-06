@@ -1,8 +1,11 @@
 let md = false;
 let pc = " -1";
-let board = "rnbqkbnrpppppppp--------------------------------PPPPPPPPRNBQKBNR";
 let moveRecord: string[][] = [];
 // moveRecord=new Array(25).fill(["a","b"])
+
+let autoplay = false;
+let stalemateTest = false;  
+let board = "rnbqkbnrpppppppp--------------------------------PPPPPPPPRNBQKBNR";
 let pieceKeys = [
 	[8, 9, 10, 11, 12, 13, 14, 15],
 	[0, 7],
@@ -17,26 +20,29 @@ let pieceKeys = [
 	[59],
 	[60],
 ];
-// let board = "----------------------------------q------k---------------K------";
-// let pieceKeys = [
-// 	[],
-// 	[],
-// 	[],
-// 	[],
-// 	[34],
-// 	[41],
-// 	[],
-// 	[],
-// 	[],
-// 	[],
-// 	[],
-// 	[57],
-// ];
+if(stalemateTest)board = "----------------------------------q------k---------------K------";
+if(stalemateTest)pieceKeys = [
+	[],
+	[],
+	[],
+	[],
+	[34],
+	[41],
+	[],
+	[],
+	[],
+	[],
+	[],
+	[57],
+];
 let promoteKeys = [
 	[48, 40, 32, 56],
 	[8, 16, 24, 0],
 ];
 let sel = -1;
+let bestMove="a1a1"
+let curEval=0;
+let curEvalMate=false;
 let to = -1;
 let from = -1;
 let moveCount = 20;
@@ -45,13 +51,18 @@ let mvSq = new Array(64).fill(0);
 let check = false;
 let enpassant = [-1, -1];
 let castling = [true, true, true, true];
+if(stalemateTest)castling = [false, false, false, false];
 let fiftyMove = 0;
 let moves = 0;
 let promoting = false;
 let promotion = -1;
 let currentMove = "";
 let clearAllTD: any = null;
+let updater: any = null;
 export let get={
+    autoplay:()=>{return autoplay},
+    bestMove:()=>{return bestMove},
+    updater:()=>{return updater},
     md:()=>{return md},
     pc:()=>{return pc},
     board:()=>{return board},
@@ -61,7 +72,8 @@ export let get={
     sel:()=>{return sel},
     to:()=>{return to},
     from:()=>{return from},
-
+    curEval:()=>{return curEval},
+    curEvalMate:()=>{return curEvalMate},
     moveCount:()=>{return moveCount},
     turn:()=>{return turn},
     mvSq:()=>{return mvSq},
@@ -78,6 +90,11 @@ export let get={
 
 }
 export let set={
+    autoplay:(val:boolean)=>{autoplay=val},
+    bestMove:(val:string)=>{bestMove=val},
+    updater:(val:any)=>{updater=val},
+    curEval:(val:number)=>{curEval=val},
+    curEvalMate:(val:boolean)=>{curEvalMate=val},
     md:(val:boolean)=>{md=val},
     pc:(val:string)=>{pc=val},
     board:(val:string)=>{board=val},

@@ -74,3 +74,16 @@
 ::-webkit-scrollbar{
   display: none;
 }
+.drew{
+	  animation: draw 1s;
+}
+@keyframes draw {
+	from {
+		stroke-dasharray: 0, 100;
+		stroke-dashoffset: 0;
+	}
+	to {
+		stroke-dasharray: 200, 0;
+		stroke-dashoffset: 200;
+	}
+}

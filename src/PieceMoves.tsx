@@ -35,6 +35,8 @@ function flatten(arr: any) {
 }
 
 export function moveManager(k: any, board: any, turn: boolean) {
+	if(k==-1)
+		return
 	let piece = board[k];
 	let pieceColor = piece >= "a";
 	if (turn !== pieceColor) return;
@@ -51,6 +53,7 @@ export function moveManager(k: any, board: any, turn: boolean) {
 				: false
 		)
 	);
+	// console.log(board,k)
 	let pieceType = piece.toLowerCase();
 	let pieceMoves = pieceDict[pieceType](
 		k,
