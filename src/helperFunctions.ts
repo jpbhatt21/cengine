@@ -1,6 +1,20 @@
 import { checkForAvailableMoves, checkForCheck, moveManager, setData } from "./PieceMoves";
 import { get, set } from "./variables";
-
+export async function getEval(){
+    let res={eval:""}
+   await fetch("https://cengine.jpbhatt.tech/eval",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+            
+        },
+        body:JSON.stringify({fen:getFEN()})
+      }).then(x=>x.json()).then(x=>{res=x})
+    while(JSON.stringify(res)==JSON.stringify({eval:""})){
+        await new Promise((r) => setTimeout(r, 10))
+    }
+    console.log(res.eval.split("\n")[1])
+}
 export function getFEN(){
 
     let board=get.board();
@@ -215,6 +229,7 @@ export function moveTo(i: any, piecex: any) {
     vars.board = temp.join("");
 
     if (!vars.promoting) {
+        
         vars.check = checkForCheck(vars.board, vars.turn);
         vars.moveCount = checkForAvailableMoves(vars.board, vars.turn);
         if (vars.check && vars.moveCount == 0) mv += "#";
@@ -227,6 +242,8 @@ export function moveTo(i: any, piecex: any) {
     setData( vars.enpassant, vars.castling);
     vars.pc = "-1";
     set.all(vars);
+    if(!vars.promoting)
+        getEval()
     setTimeout(() => {let mvr=document.getElementById("moveRecord");
         mvr?.scrollTo({
             top: mvr.scrollHeight,

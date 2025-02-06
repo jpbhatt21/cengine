@@ -2,8 +2,8 @@ import { theme } from "./theme";
 import { get } from "./variables";
 import Board from "./Board";
 import { useState } from "react";
-import { getFEN } from "./helperFunctions";
-
+import { getEval } from "./helperFunctions";
+getEval()
 function App() {
 	// let tempx = moveRecord.map((x, i) => i + 1 + ". " + x.join(" ")).join(" ");
 	// console.log(tempx);
@@ -21,15 +21,6 @@ function App() {
 	let moveCount =get.moveCount();
 	let check = get.check();
 	let turn = get.turn();
-  console.log(getFEN())
-  console.log(fetch("http://192.168.50.86:5000/eval",{
-	method:"POST",
-	headers:{
-		"Content-Type":"application/json"
-		
-	},
-	body:JSON.stringify({fen:getFEN()})
-  }).then(x=>x.json()).then(x=>console.log(x)))
 	return (
 		<>
 			<div className="fixed flex mts w-full h-full items-center justify-center flex-col">

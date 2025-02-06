@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { get, set } from "./variables";
-import { boardPositionToGlobalPosition, clearPieces, moveTo, normalize } from "./helperFunctions";
+import { boardPositionToGlobalPosition, clearPieces, getEval, moveTo, normalize } from "./helperFunctions";
 import { pieces, theme } from "./theme";
 import { checkForAvailableMoves, checkForCheck, moveManager } from "./PieceMoves";
 
@@ -347,6 +347,7 @@ function Board({setUpdate}:any) {
 								set.pieceKeys(pieceKeys);
 								setMoveableSquares(mvSq);
                                 setUpdate((prev:any)=>prev+1);
+								getEval()
 							},
 
 							id:
