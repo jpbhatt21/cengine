@@ -1,10 +1,13 @@
+import { checkForInsufficientMaterial } from "./helperFunctions";
+import { checkForAvailableMoves } from "./PieceMoves";
+
 let md = false;
 let pc = " -1";
 let moveRecord: string[][] = [];
 // moveRecord=new Array(25).fill(["a","b"])
 
 let autoplay = false;
-let stalemateTest = false;  
+let stalemateTest = !false;  
 let board = "rnbqkbnrpppppppp--------------------------------PPPPPPPPRNBQKBNR";
 let pieceKeys = [
 	[8, 9, 10, 11, 12, 13, 14, 15],
@@ -20,13 +23,13 @@ let pieceKeys = [
 	[59],
 	[60],
 ];
-if(stalemateTest)board = "----------------------------------q------k---------------K------";
+if(stalemateTest)board = "-----------------------------------------k------------p--K------";
 if(stalemateTest)pieceKeys = [
+	[54],
 	[],
 	[],
 	[],
 	[],
-	[34],
 	[41],
 	[],
 	[],
@@ -45,7 +48,6 @@ let curEval=0;
 let curEvalMate=false;
 let to = -1;
 let from = -1;
-let moveCount = 20;
 let turn = true;
 let mvSq = new Array(64).fill(0);
 let check = false;
@@ -60,9 +62,12 @@ let currentMove = "";
 let clearAllTD: any = null;
 let bestPiecePC:any=null;
 let updater: any = null;
+let noMoveAvailable = checkForAvailableMoves(board, turn);
 let threeFoldReptition = false;
+let insufficientMaterial=checkForInsufficientMaterial(board);
 let thinking = true     ;   
 export let get={
+    insufficientMaterial:()=>{return insufficientMaterial},
     bestPiecePC:()=>{return bestPiecePC},
     thinking:()=>{return thinking},
     threeFoldReptition:()=>{return threeFoldReptition},
@@ -80,7 +85,7 @@ export let get={
     from:()=>{return from},
     curEval:()=>{return curEval},
     curEvalMate:()=>{return curEvalMate},
-    moveCount:()=>{return moveCount},
+    noMoveAvailable:()=>{return noMoveAvailable},
     turn:()=>{return turn},
     mvSq:()=>{return mvSq},
     check:()=>{return check},
@@ -92,10 +97,11 @@ export let get={
     promotion:()=>{return promotion},
     currentMove:()=>{return currentMove},
     clearAllTD:()=>{return clearAllTD},
-    all:()=>{return {md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,moveCount,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
+    all:()=>{return {insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
 
 }
 export let set={
+    insufficientMaterial:(val:boolean)=>{insufficientMaterial=val},
     bestPiecePC:(val:any)=>{bestPiecePC=val},
     thinking:(val:boolean)=>{thinking=val},
     threeFoldReptition:(val:boolean)=>{threeFoldReptition=val},
@@ -113,7 +119,7 @@ export let set={
     sel:(val:number)=>{sel=val},
     to:(val:number)=>{to=val},
     from:(val:number)=>{from=val},
-    moveCount:(val:number)=>{moveCount=val},
+    noMoveAvailable:(val:boolean)=>{noMoveAvailable=val},
     turn:(val:boolean)=>{turn=val},
     mvSq:(val:number[])=>{mvSq=val},
     check:(val:boolean)=>{check=val},
@@ -135,7 +141,7 @@ export let set={
         sel=val.sel;
         to=val.to;
         from=val.from;
-        moveCount=val.moveCount;
+        noMoveAvailable=val.noMoveAvailable;
         turn=val.turn;
         mvSq=val.mvSq;
         check=val.check;
@@ -148,6 +154,7 @@ export let set={
         currentMove=val.currentMove;
         clearAllTD=val.clearAllTD;
         threeFoldReptition=val.threeFoldReptition;
+        insufficientMaterial=val.insufficientMaterial;
     }
 
 

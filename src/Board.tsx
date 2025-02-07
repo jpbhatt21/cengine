@@ -246,7 +246,7 @@ function Board({ setUpdate }: any) {
 				className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 z-[2]"
 				viewBox="0 0 640 640"
 				fill="none">
-				{!get.autoplay() && (
+				{!(get.autoplay()||get.noMoveAvailable()||get.threeFoldReptition()||get.insufficientMaterial()) && (
 					<path
 						fill="#5b5b5b"
 						className=" pointer-events-none  duration-500 transition-opacity"
@@ -311,7 +311,7 @@ function Board({ setUpdate }: any) {
 											...(((turn && j == 5) ||
 												(!turn && j == 11)) &&
 											get.check() &&
-											get.moveCount() == 0
+											get.noMoveAvailable()
 												? {
 														transform:
 															"rotate(90deg)",
@@ -336,6 +336,14 @@ function Board({ setUpdate }: any) {
 			{promoting &&
 				promoteKeys[turn ? 0 : 1].map((k, i) => (
 					<div key={"prom" + i} style={{ zIndex: 5 }}>
+						<div className="bg-black fixed w-[9vmin] ml-[-0.5vmin] fadein mt-[-0.5vmin] aspect-square" style= {{
+								...boardPositionToGlobalPosition(k + promotion),
+								animationDelay: `0s`,
+								pointerEvents: "none",
+								backgroundColor:(k + promotion + Math.floor((k + promotion) / 8)) % 2 == 1
+								? theme.whiteBoard
+								: theme.blackBoard,
+							}}></div>
 						{pieces[
 							`${turn ? "0" : "1"}${(
 								(i + 1) %
@@ -362,6 +370,7 @@ function Board({ setUpdate }: any) {
 							width: "8vmin",
 							height: "8vmin",
 						})}
+						
 					</div>
 				))}
 			<svg

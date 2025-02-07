@@ -8,6 +8,7 @@ import { get, set } from "./variables";
 let temp = false;
 let threeFoldRept: any = [];
 export async function getEval() {
+
 	temp = true;
 	let res = { eval: "", move: "" };
 
@@ -390,6 +391,32 @@ export function checkForThreeFoldRept(board: any, threeFoldRept: any) {
 	}
 	return false;
 }
+export function checkForInsufficientMaterial(board: any) {
+	let whiteBishopCount = 0;
+	let blackBishopCount = 0;
+	let whiteKnightCount = 0;
+	let blackKnightCount = 0;
+	let otherPieces = 0;
+	board.split("").map((x: any) => {
+		if (x == "b") whiteBishopCount++;
+		else if (x == "B") blackBishopCount++;
+		else if (x == "n") whiteKnightCount++;
+		else if (x == "N") blackKnightCount++;
+		else if (x != "-"&&x!="k"&&x!="K") otherPieces++;
+	});
+	if(otherPieces>0)return false;
+	else{
+		if(whiteBishopCount+whiteKnightCount<=1&&blackBishopCount+blackKnightCount<=1){
+			return true;
+		}
+		else if(whiteBishopCount==0&&blackBishopCount==0 && ((whiteKnightCount==2&&blackKnightCount==0)||(blackKnightCount==2&&whiteKnightCount==0))){
+			
+				return true;
+			
+		}
+		return false
+	}
+}
 export function promote(i: any, piece: any) {
 	let vars = get.all();
 	let temp = vars.board.split("");
@@ -406,13 +433,14 @@ export function promote(i: any, piece: any) {
 	vars.promotion = -1;
 	vars.turn = !vars.turn;
 	vars.check = checkForCheck(vars.board, vars.turn);
-	vars.moveCount = checkForAvailableMoves(vars.board, vars.turn);
+	vars.noMoveAvailable = checkForAvailableMoves(vars.board, vars.turn);
 	vars.currentMove += "=" + piece.toUpperCase();
-	if (vars.check && vars.moveCount == 0) vars.currentMove += "#";
+	if (vars.check && vars.noMoveAvailable) vars.currentMove += "#";
 	else if (vars.check) vars.currentMove += "+";
 	if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
 	else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
 	threeFoldRept.push(vars.board);
+	vars.insufficientMaterial=(checkForInsufficientMaterial(vars.board))
 	set.all(vars);
 	getEval();
 }
@@ -551,8 +579,8 @@ export function moveTo(i: any, piecex: any) {
 
 	if (!vars.promoting) {
 		vars.check = checkForCheck(vars.board, vars.turn);
-		vars.moveCount = checkForAvailableMoves(vars.board, vars.turn);
-		if (vars.check && vars.moveCount == 0) mv += "#";
+		vars.noMoveAvailable = checkForAvailableMoves(vars.board, vars.turn);
+		if (vars.check && vars.noMoveAvailable == 0) mv += "#";
 		else if (vars.check) mv += "+";
 		if (!vars.turn) vars.moveRecord.push([mv]);
 		else vars.moveRecord[vars.moveRecord.length - 1].push(mv);
@@ -561,6 +589,7 @@ export function moveTo(i: any, piecex: any) {
 			vars.board,
 			threeFoldRept
 		);
+		vars.insufficientMaterial=(checkForInsufficientMaterial(vars.board))
 	} else {
 		vars.currentMove = mv;
 	}

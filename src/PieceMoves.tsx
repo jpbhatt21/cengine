@@ -330,14 +330,11 @@ function kingMoves(
 			board[i][j - 4].toLowerCase() == "r"
 			&& moves.indexOf(i * 8 + j - 1) != -1
 		) {
-			tb = temp[i][j - 3];
-			temp[i][j - 3] = temp[i][j];
+			temp[i][j - 2] = temp[i][j];
 			temp[i][j] = "-";
 			if (!main || !checkForCheck(flatten(temp), turn)) {
 				moves.push(i * 8 + j - 2);
 			}
-			temp[i][j] = temp[i][j - 3];
-			temp[i][j - 3] = tb;
 		}
 	}
 	return moves;
@@ -356,7 +353,7 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 				: false
 		)
 	);
-	let moveCount = 0;
+	let noMoveAvailable = 0;
 	for (let i = 0; i < 64; i++) {
 		let mv=[]
 		if (board[i] == "-") continue;
@@ -369,7 +366,7 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 				turn,
 				true
 			);
-			moveCount += mv.length;
+			noMoveAvailable += mv.length;
 		} else if (!turn && board[i] < "a") {
 			mv = pieceDict[board[i].toLowerCase()](
 				i,
@@ -379,13 +376,13 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 				turn,
 				true
 			)
-			moveCount += mv.length;
+			noMoveAvailable += mv.length;
 		}
-		if (moveCount > 0) {
+		if (noMoveAvailable > 0) {
 			break
 		}
 	}
-	return moveCount;
+	return noMoveAvailable==0;
 }
 
 export function checkForCheck(board: any, turn: boolean) {

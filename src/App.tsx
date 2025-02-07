@@ -11,9 +11,9 @@ function App() {
 	// console.log(tempx);
 	// 	new Array(64).fill(0)
 	// );
-	// if (moveCount == 0 && check) {
+	// if (noMoveAvailable == 0 && check) {
 	// 	console.log("Checkmate");
-	// } else if (moveCount == 0) {
+	// } else if (noMoveAvailable == 0) {
 	// 	console.log("Stalemate");
 	// } else if (check) {
 	// 	console.log("Check");
@@ -22,7 +22,7 @@ function App() {
 		
 			setInterval(() => {
 				let move = get.bestMove();
-				if (move == "a1a1"||!get.autoplay()||get.moveCount()==0||get.threeFoldReptition()) return;
+				if (move == "a1a1"||!get.autoplay()||noMoveAvailable||tfr||insuff) return;
 				let sp =
 					move.length > 4 && "rnbq".indexOf(move[4]) != -1
 						? move[4]
@@ -60,9 +60,10 @@ function App() {
 	const [_, setUpdate] = useState(0);
 	if (get.updater() == null) set.updater(setUpdate);
 	let moveRecord = get.moveRecord();
-	let moveCount = get.moveCount();
+	let noMoveAvailable = get.noMoveAvailable();
 	let check = get.check();
 	let tfr=get.threeFoldReptition();
+	let insuff=get.insufficientMaterial();
 	let turn = get.turn();
 	let eva = get.curEval();
 	// console.log(get.mvSq())
@@ -108,7 +109,7 @@ function App() {
 						style={{
 							color: theme.move,
 						}}>
-						{moveCount == 0||tfr
+						{noMoveAvailable||tfr||insuff
 							? check
 								? turn
 									? "0-1"
@@ -124,15 +125,15 @@ function App() {
 					style={{
 						zIndex: 2147483647,
 						color: theme.move,
-						opacity: moveCount == 0||tfr ? 1 : 0,
+						opacity: noMoveAvailable||tfr||insuff ? 1 : 0,
 					}}>
-					{(moveCount == 0||tfr) && (
+					{(noMoveAvailable||tfr||insuff) && (
 						<>
 							<label className="flyin">
-								{check ? "Checkmate" :tfr?"Threefold Repetion": "Stalemate"}
+								{check ? "Checkmate" :tfr?"Threefold Repetion":insuff?"Insufficient Material" :"Stalemate"}
 							</label>
 							<label className="flyin text-[4vmin]">
-								{(check&&!tfr)
+								{(check&&!tfr&&!insuff)
 									? turn
 										? "Black Won"
 										: "White Won"
