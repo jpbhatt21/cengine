@@ -401,10 +401,10 @@ function Board({ setUpdate }: any) {
 				})}
 			</svg>
 			<div id="whiteCapturedPieces" className="flex top-[88vmin] fixed left-[calc(50vw-37.5vmin)] h-[5vmin] min-w-10">
-				{capturedPieces.split("").filter((x)=>x<"a").map((x) => pieces["1"+"PRNBQK".indexOf(x) as keyof typeof pieces]({}))}
+				{capturedPieces.split("").filter((x)=>x<"a").map((x) => pieces["1"+"PRNBQK".indexOf(x) as keyof typeof pieces]({className:"fadein"}))}
 			</div>
 			<div className="top-[7vmin] flex left-[calc(50vw-37.5vmin)] fixed h-[5vmin] min-w-10">
-			{capturedPieces.split("").filter((x)=>x>="a").map((x) => pieces["0"+"prnbqk".indexOf(x) as keyof typeof pieces]({}))}
+			{capturedPieces.split("").filter((x)=>x>="a").map((x) => pieces["0"+"prnbqk".indexOf(x) as keyof typeof pieces]({className:"fadein"}))}
 			</div>
 		</>
 	);
