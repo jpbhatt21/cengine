@@ -491,22 +491,18 @@ export function moveTo(i: any, piecex: any) {
 			}
 		}
 	}
-	if (piece.toLowerCase() == "p" && captured != "-") {
-		mv += fromRank;
-	}
-	if (captured != "-") {
-		mv += "x";
-	}
-	mv += toRank + "" + toFile;
-
-	vars.promotion = -1;
-	vars.promoting = false;
+	
+	
 	if ((piece == "P" && i < 8) || (piece == "p" && i > 55)) {
 		vars.promoting = true;
 		vars.promotion = i % 8;
 	}
 	if (vars.enpassant[0] != -1) {
 		if (i == vars.enpassant[0] * 8 + vars.enpassant[1]) {
+			captured=temp[
+				(vars.enpassant[0] + (vars.turn ? -1 : 1)) * 8 +
+					vars.enpassant[1]
+			] 
 			temp[
 				(vars.enpassant[0] + (vars.turn ? -1 : 1)) * 8 +
 					vars.enpassant[1]
@@ -516,6 +512,17 @@ export function moveTo(i: any, piecex: any) {
 				vars.enpassant[1];
 		}
 	}
+	if (piece.toLowerCase() == "p" && captured != "-") {
+		mv += fromRank;
+	}
+	if (captured != "-") {
+		vars.capturedPieces+=captured
+		mv += "x";
+	}
+	mv += toRank + "" + toFile;
+
+	vars.promotion = -1;
+	vars.promoting = false;
 	if (piece.toLowerCase() == "k" && Math.abs(vars.sel - i) == 2) {
 		if (i % 8 == 6) {
 			temp[i + 1] = "-";

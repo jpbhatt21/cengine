@@ -29,6 +29,7 @@ function Board({ setUpdate }: any) {
 	let promoting = get.promoting();
 	let promotion = get.promotion();
 	let thinking = get.thinking();
+	let capturedPieces = get.capturedPieces()
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
@@ -321,7 +322,7 @@ function Board({ setUpdate }: any) {
 												: {}),
 										},
 
-										className: "fixed z-[2]",
+										className: "fixed z-[2] fadein",
 										width: "8vmin",
 										height: "8vmin",
 									})
@@ -399,6 +400,12 @@ function Board({ setUpdate }: any) {
 					);
 				})}
 			</svg>
+			<div id="whiteCapturedPieces" className="flex top-[88vmin] fixed left-[calc(50vw-37.5vmin)] h-[5vmin] min-w-10">
+				{capturedPieces.split("").filter((x)=>x<"a").map((x, i) => pieces["1"+"PRNBQK".indexOf(x) as keyof typeof pieces]({}))}
+			</div>
+			<div className="top-[7vmin] flex left-[calc(50vw-37.5vmin)] fixed h-[5vmin] min-w-10">
+			{capturedPieces.split("").filter((x)=>x>="a").map((x, i) => pieces["0"+"prnbqk".indexOf(x) as keyof typeof pieces]({}))}
+			</div>
 		</>
 	);
 }

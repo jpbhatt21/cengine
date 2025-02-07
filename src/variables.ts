@@ -5,9 +5,9 @@ let md = false;
 let pc = " -1";
 let moveRecord: string[][] = [];
 // moveRecord=new Array(25).fill(["a","b"])
-
+let capturedPieces=""
 let autoplay = false;
-let stalemateTest = !false;  
+let stalemateTest = false;  
 let board = "rnbqkbnrpppppppp--------------------------------PPPPPPPPRNBQKBNR";
 let pieceKeys = [
 	[8, 9, 10, 11, 12, 13, 14, 15],
@@ -67,6 +67,7 @@ let threeFoldReptition = false;
 let insufficientMaterial=checkForInsufficientMaterial(board);
 let thinking = true     ;   
 export let get={
+    capturedPieces:()=>{return capturedPieces},
     insufficientMaterial:()=>{return insufficientMaterial},
     bestPiecePC:()=>{return bestPiecePC},
     thinking:()=>{return thinking},
@@ -97,10 +98,11 @@ export let get={
     promotion:()=>{return promotion},
     currentMove:()=>{return currentMove},
     clearAllTD:()=>{return clearAllTD},
-    all:()=>{return {insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
+    all:()=>{return {capturedPieces,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
 
 }
 export let set={
+    capturedPieces:(val:string)=>{capturedPieces=val},
     insufficientMaterial:(val:boolean)=>{insufficientMaterial=val},
     bestPiecePC:(val:any)=>{bestPiecePC=val},
     thinking:(val:boolean)=>{thinking=val},
@@ -155,6 +157,7 @@ export let set={
         clearAllTD=val.clearAllTD;
         threeFoldReptition=val.threeFoldReptition;
         insufficientMaterial=val.insufficientMaterial;
+        capturedPieces=val.capturedPieces
     }
 
 
