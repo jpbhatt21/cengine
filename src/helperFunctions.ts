@@ -5,9 +5,10 @@ import {
 	setData,
 } from "./PieceMoves";
 import { get, set } from "./variables";
-let temp=false
+let temp = false;
+let threeFoldRept: any = [];
 export async function getEval() {
-    temp=true
+	temp = true;
 	let res = { eval: "", move: "" };
 
 	await fetch("https://cengine.jpbhatt.tech/move", {
@@ -50,14 +51,19 @@ export async function getEval() {
 				"prnbqk".indexOf(pieceCode.toLowerCase()) +
 					(pieceCode < "a" ? 6 : 0)
 			].indexOf(from);
-    piece = document.getElementById(piece);
-    if(piece){
-        piece.style.zIndex=5
-    }
-    temp=false
+	piece = document.getElementById(piece);
+	if (piece) {
+		set.bestPiecePC(piece);
+		piece.style.zIndex = 3;
+	}
+	else{
+		set.bestPiecePC(null);
+	}
+	temp = false;
+	set.thinking(false);
 	set.bestMove(bestMove != "(none)" ? bestMove : "a1a1");
 	get.updater()((prev: any) => prev + 1);
-
+	// console.log(move);
 	// console.log(score, bestMove);
 }
 export function getArrowPos(move: any) {
@@ -76,11 +82,12 @@ export function getArrowPos(move: any) {
 			: Math.abs(slope) < 1
 			? 5
 			: 4;
-	let dir = [from[0] < to[0] ? 1 : from[0]!=to[0]?-1:0, from[1] < to[1] ? 1 :  from[1]!=to[1]?-1:0];
-    if(type!=4)
-        to[0] = to[0]-dir[0]/4;
-    if(type!=5)
-        to[1] = to[1]-dir[1]/4;
+	let dir = [
+		from[0] < to[0] ? 1 : from[0] != to[0] ? -1 : 0,
+		from[1] < to[1] ? 1 : from[1] != to[1] ? -1 : 0,
+	];
+	if (type != 4) to[0] = to[0] - dir[0] / 4;
+	if (type != 5) to[1] = to[1] - dir[1] / 4;
 	return [
 		"M " +
 			(from[0] * 80 + 30) +
@@ -352,10 +359,9 @@ export function boardPositionToGlobalPosition(k: number) {
 	let x = (8 - (k % 8) - 4.5) * 9.375 + 4;
 	let y = (Math.floor(k / 8) - 3.5) * 9.375 + 4;
 	let move = get.bestMove();
-    let from = move.charCodeAt(0) - 97 + parseInt(move[1]) * 8 - 8;
-	if (move == "a1a1")
-        from=-1
-	
+	let from = move.charCodeAt(0) - 97 + parseInt(move[1]) * 8 - 8;
+	if (move == "a1a1") from = -1;
+
 	return {
 		top: "calc(50vh - " + y + "vmin)",
 		left: "calc(50vw - " + x + "vmin)",
@@ -364,7 +370,7 @@ export function boardPositionToGlobalPosition(k: number) {
 				? "auto"
 				: "none",
 		transition: "top 0.2s left 0.2s",
-		zIndex: k == from||temp ? 3 : 0,
+		zIndex: k == from || temp ? 3 : 0,
 	};
 }
 export function clearPieces(def: boolean = true) {
@@ -377,15 +383,18 @@ export function clearPieces(def: boolean = true) {
 	}
 	set.clearAllTD(null);
 }
+export function checkForThreeFoldRept(board: any, threeFoldRept: any) {
+	threeFoldRept = threeFoldRept.filter((x: any) => x == board);
+	if (threeFoldRept.length >= 3) {
+		return true;
+	}
+	return false;
+}
 export function promote(i: any, piece: any) {
-	// console.log("promoting");
 	let vars = get.all();
-
 	let temp = vars.board.split("");
-
 	temp[(vars.turn ? 56 : 0) + vars.promotion] = piece;
 	vars.board = temp.join("");
-	// console.log(vars.board);
 	vars.pieceKeys[(vars.turn ? 1 : 7) + i].push(
 		(vars.turn ? 56 : 0) + vars.promotion
 	);
@@ -403,6 +412,7 @@ export function promote(i: any, piece: any) {
 	else if (vars.check) vars.currentMove += "+";
 	if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
 	else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
+	threeFoldRept.push(vars.board);
 	set.all(vars);
 	getEval();
 }
@@ -422,6 +432,7 @@ export function moveTo(i: any, piecex: any) {
 		vars.clearAllTD = setTimeout(() => {
 			clearPieces();
 		}, 500);
+	set.thinking(true);
 	let enp = -1;
 	let temp = vars.board.split("");
 	let piece = vars.board[vars.sel];
@@ -545,6 +556,11 @@ export function moveTo(i: any, piecex: any) {
 		else if (vars.check) mv += "+";
 		if (!vars.turn) vars.moveRecord.push([mv]);
 		else vars.moveRecord[vars.moveRecord.length - 1].push(mv);
+		threeFoldRept.push(vars.board);
+		vars.threeFoldReptition = checkForThreeFoldRept(
+			vars.board,
+			threeFoldRept
+		);
 	} else {
 		vars.currentMove = mv;
 	}

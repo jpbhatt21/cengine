@@ -58,8 +58,14 @@ let promoting = false;
 let promotion = -1;
 let currentMove = "";
 let clearAllTD: any = null;
+let bestPiecePC:any=null;
 let updater: any = null;
+let threeFoldReptition = false;
+let thinking = true     ;   
 export let get={
+    bestPiecePC:()=>{return bestPiecePC},
+    thinking:()=>{return thinking},
+    threeFoldReptition:()=>{return threeFoldReptition},
     autoplay:()=>{return autoplay},
     bestMove:()=>{return bestMove},
     updater:()=>{return updater},
@@ -86,10 +92,13 @@ export let get={
     promotion:()=>{return promotion},
     currentMove:()=>{return currentMove},
     clearAllTD:()=>{return clearAllTD},
-    all:()=>{return {md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,moveCount,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD}}
+    all:()=>{return {md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,moveCount,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
 
 }
 export let set={
+    bestPiecePC:(val:any)=>{bestPiecePC=val},
+    thinking:(val:boolean)=>{thinking=val},
+    threeFoldReptition:(val:boolean)=>{threeFoldReptition=val},
     autoplay:(val:boolean)=>{autoplay=val},
     bestMove:(val:string)=>{bestMove=val},
     updater:(val:any)=>{updater=val},
@@ -138,6 +147,7 @@ export let set={
         promotion=val.promotion;
         currentMove=val.currentMove;
         clearAllTD=val.clearAllTD;
+        threeFoldReptition=val.threeFoldReptition;
     }
 
 

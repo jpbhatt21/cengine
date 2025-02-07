@@ -12,7 +12,6 @@ import { pieces, theme } from "./theme";
 import { moveManager } from "./PieceMoves";
 
 function Board({ setUpdate }: any) {
-	const [clickCount, setClickCount] = useState(0);
 	const [moveableSquares, setMoveableSquares] = useState(
 		new Array(64).fill(0)
 	);
@@ -29,6 +28,7 @@ function Board({ setUpdate }: any) {
 	let mvSq = get.mvSq();
 	let promoting = get.promoting();
 	let promotion = get.promotion();
+	let thinking = get.thinking();
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
@@ -249,9 +249,9 @@ function Board({ setUpdate }: any) {
 				{!get.autoplay() && (
 					<path
 						fill="#5b5b5b"
-						className=" pointer-events-none  fad ein"
-						key={get.bestMove() + " " + get.moveRecord().length}
-						style={{ animationDuration: "0.15s" }}
+						className=" pointer-events-none  duration-500 transition-opacity"
+						// key={get.bestMove() + " " + get.moveRecord().length}
+						style={{ opacity:thinking?0:0.75 }}
 						d={getArrowPos(get.bestMove())}></path>
 				)}
 			</svg>
@@ -283,9 +283,15 @@ function Board({ setUpdate }: any) {
 											e.currentTarget.style.pointerEvents =
 												"none";
 											e.currentTarget.style.zIndex = 4;
-											setClickCount(clickCount + 1);
+											
 											sel = k;
 											md = true;
+											let tempc=document.getElementById(pc)
+											// console.log(tempc)
+											if(tempc){
+												tempc.style.zIndex = "1";
+												if(get.bestPiecePC)(get.bestPiecePC() as HTMLElement).style.zIndex = "3";
+											}
 											pc =
 												`${j < 6 ? "0" : "1"}${(
 													j % 6
@@ -329,7 +335,7 @@ function Board({ setUpdate }: any) {
 			</div>
 			{promoting &&
 				promoteKeys[turn ? 0 : 1].map((k, i) => (
-					<div key={"prom" + i} style={{ zIndex: clickCount + 1 }}>
+					<div key={"prom" + i} style={{ zIndex: 5 }}>
 						{pieces[
 							`${turn ? "0" : "1"}${(
 								(i + 1) %

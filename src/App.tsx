@@ -22,7 +22,7 @@ function App() {
 		
 			setInterval(() => {
 				let move = get.bestMove();
-				if (move == "a1a1"||!get.autoplay()) return;
+				if (move == "a1a1"||!get.autoplay()||get.moveCount()==0||get.threeFoldReptition()) return;
 				let sp =
 					move.length > 4 && "rnbq".indexOf(move[4]) != -1
 						? move[4]
@@ -62,6 +62,7 @@ function App() {
 	let moveRecord = get.moveRecord();
 	let moveCount = get.moveCount();
 	let check = get.check();
+	let tfr=get.threeFoldReptition();
 	let turn = get.turn();
 	let eva = get.curEval();
 	// console.log(get.mvSq())
@@ -107,7 +108,7 @@ function App() {
 						style={{
 							color: theme.move,
 						}}>
-						{moveCount == 0
+						{moveCount == 0||tfr
 							? check
 								? turn
 									? "0-1"
@@ -123,15 +124,15 @@ function App() {
 					style={{
 						zIndex: 2147483647,
 						color: theme.move,
-						opacity: moveCount == 0 ? 1 : 0,
+						opacity: moveCount == 0||tfr ? 1 : 0,
 					}}>
-					{moveCount == 0 && (
+					{(moveCount == 0||tfr) && (
 						<>
 							<label className="flyin">
-								{check ? "Checkmate" : "Stalemate"}
+								{check ? "Checkmate" :tfr?"Threefold Repetion": "Stalemate"}
 							</label>
 							<label className="flyin text-[4vmin]">
-								{check
+								{(check&&!tfr)
 									? turn
 										? "Black Won"
 										: "White Won"
