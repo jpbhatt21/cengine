@@ -6,11 +6,13 @@ import {
 	getArrowPos,
 	moveTo,
 	normalize,
+	performSuggestedMove,
 	promote,
 } from "./helperFunctions";
 import { pieces, theme } from "./theme";
 import { moveManager } from "./PieceMoves";
-
+let moveNext=false
+let flipBoard=true
 function Board({ setUpdate }: any) {
 	const [moveableSquares, setMoveableSquares] = useState(
 		new Array(64).fill(0)
@@ -29,17 +31,17 @@ function Board({ setUpdate }: any) {
 	let promoting = get.promoting();
 	let promotion = get.promotion();
 	let thinking = get.thinking();
-	let capturedPieces = get.capturedPieces()
+	let capturedPieces = get.capturedPieces();
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
 			if (!piece) {
 				return;
 			}
-
+			
 			if (get.md()) {
-				piece.style.top = "calc( " + e.clientY + "px - 4vmin)";
-				piece.style.left = "calc( " + e.clientX + "px - 4vmin)";
+				piece.style.top = "calc( " + (flipBoard?(window.innerHeight-e.clientY):e.clientY )+ "px - 4vmin)";
+				piece.style.left = "calc( " + (flipBoard?(window.innerWidth-e.clientX ):e.clientX)+ "px - 4vmin)";
 				piece.style.transitionDuration = "0s";
 			}
 		});
@@ -62,8 +64,6 @@ function Board({ setUpdate }: any) {
 
 			setMoveableSquares(get.mvSq());
 			setUpdate((prev: any) => prev + 1);
-			// console.log(setMoveRecord);
-			// setMoveRecord(get.moveRecord());
 			if (!piece) {
 				return;
 			}
@@ -96,10 +96,67 @@ function Board({ setUpdate }: any) {
 			}, 500);
 			set.clearAllTD(clearAllTD);
 		});
+		document.addEventListener("keydown", (e) => {
+			if (e.code == "ArrowLeft") {
+				if (get.currentHalfMove() > 0) {
+					set.currentHalfMove(get.currentHalfMove() - 1);
+					let posVar = get.positionHistory()[get.currentHalfMove()];
+					let px = document.getElementById(posVar[6]);
+					if (px) px.style.transitionDuration = "0.2s";
+					set.pieceKeys(posVar[0]);
+					set.fiftyMove(posVar[1]);
+					set.enpassant(posVar[2]);
+					set.castling(posVar[3]);
+					set.turn(posVar[4]);
+					set.board(posVar[5]);
+					set.from(posVar[7]);
+					set.to(posVar[8]);
+					set.capturedPieces(posVar[9]);
+					set.sel(-1);
+					setUpdate((prev: any) => prev + 1);
+				}
+			}
+			if (e.code == "ArrowRight") {
+				if (get.currentHalfMove() < get.positionHistory().length - 1) {
+					moveNext=false
+					set.currentHalfMove(get.currentHalfMove() + 1);
+					let posVar = get.positionHistory()[get.currentHalfMove()];
+					let px = document.getElementById(posVar[6]);
+					if (px) px.style.transitionDuration = "0.2s";
+					set.pieceKeys(posVar[0]);
+					set.fiftyMove(posVar[1]);
+					set.enpassant(posVar[2]);
+					set.castling(posVar[3]);
+					set.turn(posVar[4]);
+					set.board(posVar[5]);
+					set.from(posVar[7]);
+					set.to(posVar[8]);
+					set.sel(-1);
+					set.capturedPieces(posVar[9]);
+
+					setUpdate((prev: any) => prev + 1);
+				} else if(moveNext) {
+					if ( get.noMoveAvailable() || get.threeFoldReptition() || get.insufficientMaterial())
+						return;
+					performSuggestedMove();
+					setUpdate((x:any) => x + 1);
+				}
+			}
+		});
+		document.addEventListener("keyup", (e) => {
+			if (e.code == "ArrowRight") {
+				moveNext=true
+			}
+		});
 	}, []);
 
 	return (
 		<>
+			<div className="fixed flex mts w-full h-full items-center justify-center flex-col"
+			style={{
+				transform:flipBoard?"rotate(180deg)":""
+			}}
+			>
 			<svg
 				id="mainboard"
 				xmlns="http://www.w3.org/2000/svg"
@@ -245,15 +302,37 @@ function Board({ setUpdate }: any) {
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 z-[2]"
+				style={{
+					zIndex:
+						get.currentHalfMove() < get.currentMaxMoves() ? 99 : 2,
+				}}
 				viewBox="0 0 640 640"
 				fill="none">
-				{!(get.autoplay()||get.noMoveAvailable()||get.threeFoldReptition()||get.insufficientMaterial()) && (
+				{!(
+					get.autoplay() ||
+					get.noMoveAvailable() ||
+					get.threeFoldReptition() ||
+					get.insufficientMaterial()
+				) && (
 					<path
 						fill="#5b5b5b"
 						className=" pointer-events-none  duration-500 transition-opacity"
 						// key={get.bestMove() + " " + get.moveRecord().length}
-						style={{ opacity:thinking?0:0.75 }}
-						d={getArrowPos(get.bestMove())}></path>
+						style={{
+							opacity: thinking
+								? 0
+								: get.currentHalfMove() < get.currentMaxMoves()
+								? 0.25
+								: 0.75,
+						}}
+						d={getArrowPos(
+							get.currentHalfMove() < get.currentMaxMoves()
+								? "abcdefgh"[from % 8] +
+										Math.floor(from / 8 + 1).toString() +
+										"abcdefgh"[to % 8] +
+										Math.floor(to / 8 + 1).toString()
+								: get.bestMove()
+						)}></path>
 				)}
 			</svg>
 			<div id="allPieces">
@@ -261,7 +340,6 @@ function Board({ setUpdate }: any) {
 					return x.map((k: any, i: any) => {
 						return (
 							<div key={"test" + i + " " + j}>
-								
 								{k != -1 ? (
 									pieces[
 										`${j < 6 ? "0" : "1"}${(
@@ -271,32 +349,46 @@ function Board({ setUpdate }: any) {
 										onMouseDown: (e: any) => {
 											if (promoting) return;
 											if (
-												!(
-													(turn && j < 6) ||
-													(!turn && j >= 6)
-												)
+												get.currentHalfMove() <
+												get.currentMaxMoves()
 											)
 												return;
-											mvSq =
-												moveManager(k, board, turn) ||
-												new Array(64).fill(0);
-											setMoveableSquares(mvSq);
-											e.currentTarget.style.pointerEvents =
-												"none";
-											e.currentTarget.style.zIndex = 4;
-											
+											if (
+												(turn && j < 6) ||
+												(!turn && j >= 6)
+											) {
+												mvSq =
+													moveManager(
+														k,
+														board,
+														turn
+													) || new Array(64).fill(0);
+												setMoveableSquares(mvSq);
+											} else {
+												mvSq = new Array(64).fill(0);
+												setMoveableSquares(mvSq);
+											}
+
 											sel = k;
 											md = true;
-											let tempc=document.getElementById(pc)
-											// console.log(tempc)
-											if(tempc){
+											let tempc =
+												document.getElementById(pc);
+										
+											if (tempc) {
 												tempc.style.zIndex = "1";
-												if(get.bestPiecePC)(get.bestPiecePC() as HTMLElement).style.zIndex = "3";
+												if (get.bestPiecePC)
+													(
+														get.bestPiecePC() as HTMLElement
+													).style.zIndex = "3";
 											}
+											e.currentTarget.style.pointerEvents =
+												"none";
+											e.currentTarget.style.zIndex = 10;
 											pc =
 												`${j < 6 ? "0" : "1"}${(
 													j % 6
 												).toString()}` + i;
+											
 											set.mvSq(mvSq);
 											set.sel(sel);
 											set.md(md);
@@ -319,7 +411,8 @@ function Board({ setUpdate }: any) {
 														animationDuration:
 															"0.2s",
 												  }
-												: {}),
+												: {transform:
+													flipBoard?"rotate(180deg)":""}),
 										},
 
 										className: "fixed z-[2] fadein",
@@ -337,13 +430,20 @@ function Board({ setUpdate }: any) {
 			{promoting &&
 				promoteKeys[turn ? 0 : 1].map((k, i) => (
 					<div key={"prom" + i} style={{ zIndex: 5 }}>
-						<div className="bg-black fixed w-[9vmin] ml-[-0.5vmin] fadein mt-[-0.5vmin] aspect-square" style= {{
+						<div
+							className="bg-black fixed w-[9vmin] ml-[-0.5vmin] fadein mt-[-0.5vmin] aspect-square"
+							style={{
 								...boardPositionToGlobalPosition(k + promotion),
 								animationDelay: `0s`,
 								pointerEvents: "none",
-								backgroundColor:(k + promotion + Math.floor((k + promotion) / 8)) % 2 == 1
-								? theme.whiteBoard
-								: theme.blackBoard,
+								backgroundColor:
+									(k +
+										promotion +
+										Math.floor((k + promotion) / 8)) %
+										2 ==
+									1
+										? theme.whiteBoard
+										: theme.blackBoard,
 							}}></div>
 						{pieces[
 							`${turn ? "0" : "1"}${(
@@ -371,7 +471,6 @@ function Board({ setUpdate }: any) {
 							width: "8vmin",
 							height: "8vmin",
 						})}
-						
 					</div>
 				))}
 			<svg
@@ -380,7 +479,7 @@ function Board({ setUpdate }: any) {
 				className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 "
 				viewBox="0 0 640 640"
 				style={{
-					zIndex: 2,
+					zIndex: 5,
 				}}
 				fill="none">
 				{moveableSquares.map((_, i) => {
@@ -400,11 +499,52 @@ function Board({ setUpdate }: any) {
 					);
 				})}
 			</svg>
-			<div id="whiteCapturedPieces" className="flex top-[88vmin] fixed left-[calc(50vw-37.5vmin)] h-[5vmin] min-w-10">
-				{capturedPieces.split("").filter((x)=>x<"a").map((x) => pieces["1"+"PRNBQK".indexOf(x) as keyof typeof pieces]({className:"fadein"}))}
+			<div
+				id="whiteCapturedPieces"
+				className="flex top-[88vmin] fixed  h-[5vmin] min-w-10"style={flipBoard?{
+					right:"calc(50vw - 37.5vmin)",
+					transform:"rotateY(180deg)"
+					
+				}:{
+					left:"calc(50vw - 37.5vmin)",
+					
+				}}>
+				{capturedPieces
+					.split("")
+					.filter((x) => x < "a")
+					.map((x) =>
+						pieces[
+							("1" + "PRNBQK".indexOf(x)) as keyof typeof pieces
+						]({ className: "fadein",style:{transform:flipBoard?"rotate(180deg) rotateY(180deg)":""} })
+					)}
 			</div>
-			<div className="top-[7vmin] flex left-[calc(50vw-37.5vmin)] fixed h-[5vmin] min-w-10">
-			{capturedPieces.split("").filter((x)=>x>="a").map((x) => pieces["0"+"prnbqk".indexOf(x) as keyof typeof pieces]({className:"fadein"}))}
+			<div className="top-[7vmin] flex fixed h-[5vmin] min-w-10"
+			style={flipBoard?{
+				right:"calc(50vw - 37.5vmin)",
+				transform:"rotateY(180deg)"
+				
+			}:{
+				left:"calc(50vw - 37.5vmin)",
+				
+			}}
+			>
+				{capturedPieces
+					.split("")
+					.filter((x) => x >= "a")
+					.map((x) =>
+						pieces[
+							("0" + "prnbqk".indexOf(x)) as keyof typeof pieces
+						]({ className: "fadein",style:{transform:flipBoard?"rotate(180deg) rotateY(180deg)":""} })
+					)}
+			</div>
+			
+			</div>
+			<div className="top-[10vmin]  flex right-[calc(50vw-37.5vmin)] w-fit fixed"
+			style={{
+				color:theme.text
+			}}
+			>
+				Engine Depth :{" "+get.engineDepth()}
 			</div>
 		</>
 	);

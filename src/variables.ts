@@ -66,7 +66,15 @@ let noMoveAvailable = checkForAvailableMoves(board, turn);
 let threeFoldReptition = false;
 let insufficientMaterial=checkForInsufficientMaterial(board);
 let thinking = true     ;   
+let engineDepth = "";
+let currentHalfMove=0;
+let currentMaxMoves=0;
+let positionHistory: any[] = [[pieceKeys,fiftyMove,enpassant,castling,turn,board,"dsadsada",-1,-1,capturedPieces]];
 export let get={
+    engineDepth:()=>{return engineDepth},
+    positionHistory:()=>{return positionHistory},
+    currentMaxMoves:()=>{return currentMaxMoves},
+    currentHalfMove:()=>{return currentHalfMove},
     capturedPieces:()=>{return capturedPieces},
     insufficientMaterial:()=>{return insufficientMaterial},
     bestPiecePC:()=>{return bestPiecePC},
@@ -98,10 +106,14 @@ export let get={
     promotion:()=>{return promotion},
     currentMove:()=>{return currentMove},
     clearAllTD:()=>{return clearAllTD},
-    all:()=>{return {capturedPieces,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
+    all:()=>{return {capturedPieces,currentHalfMove,positionHistory,currentMaxMoves,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
 
 }
 export let set={
+    engineDepth:(val:string)=>{engineDepth=val},
+    positionHistory:(val:any)=>{positionHistory=val},
+    currentMaxMoves:(val:number)=>{currentMaxMoves=val},
+    currentHalfMove:(val:number)=>{currentHalfMove=val},
     capturedPieces:(val:string)=>{capturedPieces=val},
     insufficientMaterial:(val:boolean)=>{insufficientMaterial=val},
     bestPiecePC:(val:any)=>{bestPiecePC=val},
@@ -157,7 +169,10 @@ export let set={
         clearAllTD=val.clearAllTD;
         threeFoldReptition=val.threeFoldReptition;
         insufficientMaterial=val.insufficientMaterial;
-        capturedPieces=val.capturedPieces
+        capturedPieces=val.capturedPieces;
+        currentHalfMove=val.currentHalfMove;
+        currentMaxMoves=val.currentMaxMoves;
+        positionHistory=val.positionHistory;
     }
 
 

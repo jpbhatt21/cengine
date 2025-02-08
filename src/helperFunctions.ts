@@ -8,7 +8,6 @@ import { get, set } from "./variables";
 let temp = false;
 let threeFoldRept: any = [];
 export async function getEval() {
-
 	temp = true;
 	let res = { eval: "", move: "" };
 
@@ -41,6 +40,7 @@ export async function getEval() {
 		set.curEvalMate(type == "mate");
 		set.curEval(score);
 	}
+	set.engineDepth(move[0].split(" ")[2])
 	let from = bestMove.charCodeAt(0) - 97 + parseInt(bestMove[1]) * 8 - 8;
 	let pieceCode = get.board()[from];
 	let piece: any =
@@ -56,16 +56,16 @@ export async function getEval() {
 	if (piece) {
 		set.bestPiecePC(piece);
 		piece.style.zIndex = 3;
-	}
-	else{
+	} else {
 		set.bestPiecePC(null);
 	}
 	temp = false;
 	set.thinking(false);
 	set.bestMove(bestMove != "(none)" ? bestMove : "a1a1");
+	if(!get.turn())
+		performSuggestedMove()
 	get.updater()((prev: any) => prev + 1);
-	// console.log(move);
-	// console.log(score, bestMove);
+
 }
 export function getArrowPos(move: any) {
 	let from = [move.charCodeAt(0) - 97, 7 - (move.charCodeAt(1) - 49)];
@@ -402,19 +402,24 @@ export function checkForInsufficientMaterial(board: any) {
 		else if (x == "B") blackBishopCount++;
 		else if (x == "n") whiteKnightCount++;
 		else if (x == "N") blackKnightCount++;
-		else if (x != "-"&&x!="k"&&x!="K") otherPieces++;
+		else if (x != "-" && x != "k" && x != "K") otherPieces++;
 	});
-	if(otherPieces>0)return false;
-	else{
-		if(whiteBishopCount+whiteKnightCount<=1&&blackBishopCount+blackKnightCount<=1){
+	if (otherPieces > 0) return false;
+	else {
+		if (
+			whiteBishopCount + whiteKnightCount <= 1 &&
+			blackBishopCount + blackKnightCount <= 1
+		) {
+			return true;
+		} else if (
+			whiteBishopCount == 0 &&
+			blackBishopCount == 0 &&
+			((whiteKnightCount == 2 && blackKnightCount == 0) ||
+				(blackKnightCount == 2 && whiteKnightCount == 0))
+		) {
 			return true;
 		}
-		else if(whiteBishopCount==0&&blackBishopCount==0 && ((whiteKnightCount==2&&blackKnightCount==0)||(blackKnightCount==2&&whiteKnightCount==0))){
-			
-				return true;
-			
-		}
-		return false
+		return false;
 	}
 }
 export function promote(i: any, piece: any) {
@@ -440,12 +445,43 @@ export function promote(i: any, piece: any) {
 	if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
 	else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
 	threeFoldRept.push(vars.board);
-	vars.insufficientMaterial=(checkForInsufficientMaterial(vars.board))
+	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
+
 	set.all(vars);
 	getEval();
 }
+export function performSuggestedMove() {
+	let move = get.bestMove();
+	if (move == "a1a1"||temp) return;
+	let sp = move.length > 4 && "rnbq".indexOf(move[4]) != -1 ? move[4] : null;
+
+	let from = move.charCodeAt(0) - 97 + parseInt(move[1]) * 8 - 8;
+	let to = move.charCodeAt(2) - 97 + parseInt(move[3]) * 8 - 8;
+	let pieceCode = get.board()[from];
+	let piece: any =
+		(pieceCode < "a" ? "1" : "0") +
+		"prnbqk".indexOf(pieceCode.toLowerCase()) +
+		get
+			.pieceKeys()
+			[
+				"prnbqk".indexOf(pieceCode.toLowerCase()) +
+					(pieceCode < "a" ? 6 : 0)
+			].indexOf(from);
+	set.sel(from);
+	set.mvSq(
+		moveManager(from, get.board(), get.turn()) || new Array(64).fill(0)
+	);
+	
+	moveTo(to, document.getElementById(piece));
+	move = "a1a1";
+	if (sp) {
+		let i = "rnbq".indexOf(sp);
+		promote(i, get.turn() ? sp : sp.toUpperCase());
+	}
+	move = "a1a1";
+}
 export function moveTo(i: any, piecex: any) {
-	// console.log(piecex)
+
 	let vars: any = get.all();
 	if (vars.promoting) return false;
 	if (i < 0 || i > 63) return false;
@@ -491,18 +527,20 @@ export function moveTo(i: any, piecex: any) {
 			}
 		}
 	}
-	
-	
+	vars.promotion = -1;
+	vars.promoting = false;
+	vars.thinking = true;
 	if ((piece == "P" && i < 8) || (piece == "p" && i > 55)) {
 		vars.promoting = true;
 		vars.promotion = i % 8;
 	}
 	if (vars.enpassant[0] != -1) {
 		if (i == vars.enpassant[0] * 8 + vars.enpassant[1]) {
-			captured=temp[
-				(vars.enpassant[0] + (vars.turn ? -1 : 1)) * 8 +
-					vars.enpassant[1]
-			] 
+			captured =
+				temp[
+					(vars.enpassant[0] + (vars.turn ? -1 : 1)) * 8 +
+						vars.enpassant[1]
+				];
 			temp[
 				(vars.enpassant[0] + (vars.turn ? -1 : 1)) * 8 +
 					vars.enpassant[1]
@@ -516,13 +554,11 @@ export function moveTo(i: any, piecex: any) {
 		mv += fromRank;
 	}
 	if (captured != "-") {
-		vars.capturedPieces+=captured
+		vars.capturedPieces += captured;
 		mv += "x";
 	}
 	mv += toRank + "" + toFile;
 
-	vars.promotion = -1;
-	vars.promoting = false;
 	if (piece.toLowerCase() == "k" && Math.abs(vars.sel - i) == 2) {
 		if (i % 8 == 6) {
 			temp[i + 1] = "-";
@@ -537,6 +573,7 @@ export function moveTo(i: any, piecex: any) {
 			cast = i - 2;
 		}
 	}
+
 	if (piece.toLowerCase() == "r") {
 		if (vars.sel == vars.pieceKeys[vars.turn ? 1 : 7][0]) {
 			vars.castling[vars.turn ? 0 : 2] = false;
@@ -579,11 +616,25 @@ export function moveTo(i: any, piecex: any) {
 		vars.castling[1 + (vars.turn ? 2 : 0)] = false;
 	}
 	vars.to = i;
+	vars.currentHalfMove++;
+	vars.currentMaxMoves++;
 	vars.from = vars.sel;
 	temp[i] = temp[vars.sel];
 	temp[vars.sel] = "-";
 	vars.board = temp.join("");
-
+	vars.positionHistory[vars.positionHistory.length - 1][6] = piecex.id;
+	vars.positionHistory.push([
+		vars.pieceKeys,
+		vars.fiftyMove,
+		vars.enpassant,
+		vars.castling,
+		vars.turn,
+		vars.board,
+		piecex.id,
+		vars.from,
+		vars.to,
+		vars.capturedPieces,
+	]);
 	if (!vars.promoting) {
 		vars.check = checkForCheck(vars.board, vars.turn);
 		vars.noMoveAvailable = checkForAvailableMoves(vars.board, vars.turn);
@@ -596,7 +647,7 @@ export function moveTo(i: any, piecex: any) {
 			vars.board,
 			threeFoldRept
 		);
-		vars.insufficientMaterial=(checkForInsufficientMaterial(vars.board))
+		vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
 	} else {
 		vars.currentMove = mv;
 	}

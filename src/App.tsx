@@ -2,72 +2,31 @@ import { theme } from "./theme";
 import { get, set } from "./variables";
 import Board from "./Board";
 import { useEffect, useState } from "react";
-import { getEval, moveTo, promote } from "./helperFunctions";
-import { moveManager } from "./PieceMoves";
+import {
+	getEval,
+	performSuggestedMove,
+} from "./helperFunctions";
 getEval();
 
 function App() {
-	// let tempx = moveRecord.map((x, i) => i + 1 + ". " + x.join(" ")).join(" ");
-	// console.log(tempx);
-	// 	new Array(64).fill(0)
-	// );
-	// if (noMoveAvailable == 0 && check) {
-	// 	console.log("Checkmate");
-	// } else if (noMoveAvailable == 0) {
-	// 	console.log("Stalemate");
-	// } else if (check) {
-	// 	console.log("Check");
-	// }
+	
 	useEffect(() => {
-		
-			setInterval(() => {
-				let move = get.bestMove();
-				if (move == "a1a1"||!get.autoplay()||noMoveAvailable||tfr||insuff) return;
-				let sp =
-					move.length > 4 && "rnbq".indexOf(move[4]) != -1
-						? move[4]
-						: null;
-
-				let from = move.charCodeAt(0) - 97 + parseInt(move[1]) * 8 - 8;
-				let to = move.charCodeAt(2) - 97 + parseInt(move[3]) * 8 - 8;
-				let pieceCode = get.board()[from];
-				let piece: any =
-					(pieceCode < "a" ? "1" : "0") +
-					"prnbqk".indexOf(pieceCode.toLowerCase()) +
-					get
-						.pieceKeys()
-						[
-							"prnbqk".indexOf(pieceCode.toLowerCase()) +
-								(pieceCode < "a" ? 6 : 0)
-						].indexOf(from);
-				set.sel(from);
-				set.mvSq(
-					moveManager(from, get.board(), get.turn()) ||
-						new Array(64).fill(0)
-				);
-				setUpdate((x) => x + 1);
-				moveTo(to, document.getElementById(piece));
-				setUpdate((x) => x + 1);
-				move = "a1a1";
-				if (sp) {
-					let i = "rnbq".indexOf(sp);
-					promote(i, get.turn() ? sp : sp.toUpperCase());
-				}
-				move = "a1a1";
-				setUpdate((x) => x + 1);
-			}, 500);
+		setInterval(() => {
+			if (!get.autoplay() || noMoveAvailable || tfr || insuff) return;
+			performSuggestedMove();
+			setUpdate((x) => x + 1);
+		}, 100);
 	}, []);
 	const [_, setUpdate] = useState(0);
 	if (get.updater() == null) set.updater(setUpdate);
 	let moveRecord = get.moveRecord();
 	let noMoveAvailable = get.noMoveAvailable();
 	let check = get.check();
-	let tfr=get.threeFoldReptition();
-	let insuff=get.insufficientMaterial();
+	let tfr = get.threeFoldReptition();
+	let insuff = get.insufficientMaterial();
 	let turn = get.turn();
 	let eva = get.curEval();
-	// console.log(get.mvSq())
-	// console.log(get.board(), get.pieceKeys());
+	let currentHalfMove = get.currentHalfMove();
 	let evamate = get.curEvalMate();
 	return (
 		<>
@@ -109,14 +68,14 @@ function App() {
 						style={{
 							color: theme.move,
 						}}>
-						{noMoveAvailable||tfr||insuff
+						{noMoveAvailable || tfr || insuff
 							? check
 								? turn
 									? "0-1"
 									: "1-0"
 								: "1/2 - 1/2"
 							: evamate
-							? "M"+Math.abs(eva * 100)
+							? "M" + Math.abs(eva * 100)
 							: eva}
 					</div>
 				</div>
@@ -125,15 +84,21 @@ function App() {
 					style={{
 						zIndex: 2147483647,
 						color: theme.move,
-						opacity: noMoveAvailable||tfr||insuff ? 1 : 0,
+						opacity: noMoveAvailable || tfr || insuff ? 1 : 0,
 					}}>
-					{(noMoveAvailable||tfr||insuff) && (
+					{(noMoveAvailable || tfr || insuff) && (
 						<>
 							<label className="flyin">
-								{check ? "Checkmate" :tfr?"Threefold Repetion":insuff?"Insufficient Material" :"Stalemate"}
+								{check
+									? "Checkmate"
+									: tfr
+									? "Threefold Repetion"
+									: insuff
+									? "Insufficient Material"
+									: "Stalemate"}
 							</label>
 							<label className="flyin text-[4vmin]">
-								{(check&&!tfr&&!insuff)
+								{check && !tfr && !insuff
 									? turn
 										? "Black Won"
 										: "White Won"
@@ -157,10 +122,9 @@ function App() {
 								backgroundColor: theme.sel,
 								borderColor: theme.whitePiece,
 							}}
-							onClick={()=>{
-								set.autoplay(!get.autoplay())
-							}}
-							>
+							onClick={() => {
+								set.autoplay(!get.autoplay());
+							}}>
 							Moves
 						</label>
 						{moveRecord.map((x, i) => (
@@ -177,7 +141,7 @@ function App() {
 											)?.clientHeight
 											? "1px solid " + theme.pieceOutline
 											: "",
-									color: theme.move,
+									color: theme.text,
 								}}>
 								<label
 									className="w-[10%] text-center   py-1 border-r-[1px] "
@@ -196,7 +160,9 @@ function App() {
 													  theme.pieceOutline
 													: "",
 											backgroundColor:
-												i % 2 == 0
+												currentHalfMove - 1 == i * 2 + j
+													? "#313939"
+													: i % 2 == 0
 													? theme.blackBoard
 													: theme.blackPiece,
 										}}

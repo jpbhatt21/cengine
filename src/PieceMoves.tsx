@@ -53,7 +53,7 @@ export function moveManager(k: any, board: any, turn: boolean) {
 				: false
 		)
 	);
-	// console.log(board,k)
+
 	let pieceType = piece.toLowerCase();
 	let pieceMoves = pieceDict[pieceType](
 		k,
@@ -90,7 +90,6 @@ function pawnMoves(
 		temp[i][j] = "-";
 		if (!main || !checkForCheck(flatten(temp), turn)) {
 			moves.push((i + direction) * 8 + j);
-			// console.log("1",k)
 			if (
 				((i == 1 && direction == 1) || (i == 6 && direction == -1)) &&
 				i + 2 * direction < 8 &&
