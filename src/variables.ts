@@ -43,14 +43,13 @@ let promoteKeys = [
 	[8, 16, 24, 0],
 ];
 let playAsWhite = true; 
-let playAsBlack = true;
+let playAsBlack = !true;
 let playAsWhiteAI = false;
-let playAsBlackAI = false;
+let playAsBlackAI = !false;
+let showWhiteSuggestedMove = false;
+let showBlackSuggestedMove = false;
 
 let sel = -1;
-let bestMove="a1a1"
-let curEval=0;
-let curEvalMate=false;
 let to = -1;
 let from = -1;
 let turn = true;
@@ -72,6 +71,10 @@ let threeFoldReptition = false;
 let insufficientMaterial=checkForInsufficientMaterial(board);
 let thinking = true     ;   
 let engineDepth = "";
+
+let curEval=0;
+let bestMove="a1a1"
+let curEvalMate=false;
 
 let currentHalfMove=0;
 let currentMaxMoves=0;
@@ -97,7 +100,7 @@ let positionHistory: any = {
 };
 
 export let get={
-    playOptions:()=>{return {playAsWhite,playAsBlack,playAsWhiteAI,playAsBlackAI}},
+    playOptions:()=>{return {playAsWhite,playAsBlack,playAsWhiteAI,playAsBlackAI,showWhiteSuggestedMove,showBlackSuggestedMove}},
     engineDepth:()=>{return engineDepth},
     currentPosition:()=>{return currentPosition},
     positionHistory:()=>{return positionHistory},
@@ -138,7 +141,7 @@ export let get={
 
 }
 export let set={
-    setPlayOptions:(val:any)=>{playAsWhite=val.playAsWhite;playAsBlack=val.playAsBlack;playAsWhiteAI=val.playAsWhiteAI;playAsBlackAI=val.playAsBlackAI},
+    setPlayOptions:(val:any)=>{playAsWhite=val.playAsWhite;playAsBlack=val.playAsBlack;playAsWhiteAI=val.playAsWhiteAI;playAsBlackAI=val.playAsBlackAI;showWhiteSuggestedMove=val.showWhiteSuggestedMove;showBlackSuggestedMove=val.showBlackSuggestedMove},
     currentPosition:(val:string)=>{currentPosition=val},
     engineDepth:(val:string)=>{engineDepth=val},
     positionHistory:(val:any)=>{positionHistory=val},

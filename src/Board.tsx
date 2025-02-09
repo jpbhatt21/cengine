@@ -32,13 +32,14 @@ function Board({ setUpdate }: any) {
 	let promotion = get.promotion();
 	let thinking = get.thinking();
 	let capturedPieces = get.capturedPieces();
+	let playOptions = get.playOptions();
+
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
 			if (!piece) {
 				return;
 			}
-
 			if (get.md()) {
 				piece.style.top =
 					"calc( " +
@@ -102,7 +103,13 @@ function Board({ setUpdate }: any) {
 			}, 500);
 			set.clearAllTD(clearAllTD);
 		});
-		function updatePosition(data: any) {
+		function updatePosition(
+			position: any,
+			data: any,
+			positionHistory: any,
+			moveNext = false
+		) {
+			
 			let px = document.getElementById(data.pieceId);
 			if (px) {
 				px.style.transitionDuration = "0.2s";
@@ -113,13 +120,30 @@ function Board({ setUpdate }: any) {
 			set.castling(data.castling);
 			set.turn(data.turn);
 			set.board(data.board);
-			set.from(data.from);
-			set.to(data.to);
-			set.capturedPieces(data.capturedPieces);
-			set.sel(-1);
-			setMoveableSquares(new Array(64).fill(0));
-			postMoveActions(get.all(),"");
-			getEval();
+
+			let newPos = moveNext ? data.next : data.previous;
+			if (
+				((data.turn && playOptions.playAsWhiteAI) ||
+					(!data.turn && playOptions.playAsBlackAI)) &&
+				newPos != null
+			) {
+				updatePosition(
+					newPos,
+					positionHistory[newPos],
+					positionHistory
+				);
+				
+			} else {
+				set.currentPosition(position);
+				set.from(data.from);
+				set.to(data.to);
+				set.capturedPieces(data.capturedPieces);
+				set.sel(-1);
+				postMoveActions(get.all(), "");
+				if (data.next == null) getEval();
+				set.thinking(false);
+				
+			}
 			setUpdate((prev: any) => prev + 1);
 		}
 		document.addEventListener("keydown", (e) => {
@@ -128,37 +152,64 @@ function Board({ setUpdate }: any) {
 			if (e.code == "ArrowLeft") {
 				let prevPos = positionHistory[currentPosition].previous;
 				if (prevPos != null) {
-					set.currentPosition(prevPos);
-					updatePosition(positionHistory[prevPos]);
-					
+					set.bestMove("a1a1");
+					set.thinking(true);
+					setUpdate((prev: any) => prev + 1);
+					setMoveableSquares(new Array(64).fill(0));
+
+					updatePosition(
+						prevPos,
+						positionHistory[prevPos],
+						positionHistory
+					);
 				}
 			}
 			if (e.code == "ArrowRight") {
 				let nextPos = positionHistory[currentPosition].next;
 				if (nextPos != null) {
-					set.currentPosition(nextPos);
-					updatePosition(positionHistory[nextPos]);
-					
-				} 
-				// else if (moveNext) {
-				// 	if (
-				// 		get.noMoveAvailable() ||
-				// 		get.threeFoldReptition() ||
-				// 		get.insufficientMaterial()
-				// 	)
-				// 		return;
-				// 	performSuggestedMove();
-				// 	setUpdate((x: any) => x + 1);
-				// }
+					set.thinking(true);
+					setUpdate((prev: any) => prev + 1);
+					setMoveableSquares(new Array(64).fill(0));
+					updatePosition(
+						nextPos,
+						positionHistory[nextPos],
+						positionHistory,
+						true
+					);
+				}
 			}
 		});
 		document.addEventListener("keyup", (e) => {
-			if (e.code == "ArrowRight") {
-				// moveNext = true;
+			let playOptions = get.playOptions();
+			if(e.key=="1"){
+				playOptions.playAsWhite=!playOptions.playAsWhite;
 			}
+			if(e.key=="q"){
+				playOptions.playAsBlack=!playOptions.playAsBlack;
+			}
+			if(e.key=="3"){
+				playOptions.playAsWhiteAI=!playOptions.playAsWhiteAI;
+			}
+			if(e.key=="e"){
+				playOptions.playAsBlackAI=!playOptions.playAsBlackAI;
+			}
+			if(e.key=="2"){
+				playOptions.showWhiteSuggestedMove=!playOptions.showWhiteSuggestedMove;
+			}
+			if(e.key=="w"){
+				playOptions.showBlackSuggestedMove=!playOptions.showBlackSuggestedMove;
+			}
+			if(((playOptions.playAsWhiteAI||playOptions.showWhiteSuggestedMove)&&turn)||((playOptions.playAsBlackAI||playOptions.showBlackSuggestedMove)&&!turn)){
+				getEval();
+				set.mvSq(new Array(64).fill(0));
+				set.sel(-1);
+				setMoveableSquares(new Array(64).fill(0));
+
+			}
+			set.setPlayOptions(playOptions);
+			setUpdate((prev: any) => prev + 1);
 		});
 	}, []);
-
 	return (
 		<>
 			<div
@@ -316,14 +367,14 @@ function Board({ setUpdate }: any) {
 					className=" absolute h-[75vmin] aspect-square tms pointer-events-none duration-200  mb-0 z-[2]"
 					style={{
 						zIndex:
-							get.currentHalfMove() < get.currentMaxMoves()
+							get.positionHistory()[get.currentPosition()].next !=
+							null
 								? 99
 								: 2,
 					}}
 					viewBox="0 0 640 640"
 					fill="none">
 					{!(
-						get.autoplay() ||
 						get.noMoveAvailable() ||
 						get.threeFoldReptition() ||
 						get.insufficientMaterial()
@@ -333,15 +384,17 @@ function Board({ setUpdate }: any) {
 							className=" pointer-events-none  duration-500 transition-opacity"
 							// key={get.bestMove() + " " + get.moveRecord().length}
 							style={{
-								opacity: thinking
+								opacity: thinking||(turn && !playOptions.showWhiteSuggestedMove) || (!turn && !playOptions.showBlackSuggestedMove)
 									? 0
-									: get.currentHalfMove() <
-									  get.currentMaxMoves()
+									: get.positionHistory()[
+											get.currentPosition()
+									  ].next != null
 									? 0.25
 									: 0.75,
 							}}
 							d={getArrowPos(
-								get.positionHistory()[get.currentPosition()].next!==null
+								get.positionHistory()[get.currentPosition()]
+									.next != null
 									? "abcdefgh"[from % 8] +
 											Math.floor(
 												from / 8 + 1
@@ -371,8 +424,12 @@ function Board({ setUpdate }: any) {
 												)
 													return;
 												if (
-													(turn && j < 6) ||
-													(!turn && j >= 6)
+													(turn &&
+														playOptions.playAsWhite &&
+														j < 6) ||
+													(!turn &&
+														playOptions.playAsBlack &&
+														j >= 6)
 												) {
 													mvSq =
 														moveManager(
@@ -522,7 +579,7 @@ function Board({ setUpdate }: any) {
 								id={"move" + i}
 								key={"test2" + i}
 								fill={theme.move}
-								className="duration-200"
+								className="duration-20 z-[5]"
 								opacity={moveableSquares[i]}
 							/>
 						);
@@ -555,7 +612,7 @@ function Board({ setUpdate }: any) {
 										? "rotate(180deg) rotateY(180deg)"
 										: "",
 								},
-								id:`captured2${x}`,
+								id: `captured2${x}`,
 							})
 						)}
 				</div>
@@ -585,7 +642,7 @@ function Board({ setUpdate }: any) {
 										? "rotate(180deg) rotateY(180deg)"
 										: "",
 								},
-								id:`captured${x}`,
+								id: `captured${x}`,
 							})
 						)}
 				</div>

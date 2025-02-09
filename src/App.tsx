@@ -2,14 +2,10 @@ import { theme } from "./theme";
 import { get, set } from "./variables";
 import Board from "./Board";
 import { useEffect, useState } from "react";
-import {
-	getEval,
-	performSuggestedMove,
-} from "./helperFunctions";
+import { getEval, performSuggestedMove } from "./helperFunctions";
 getEval();
 
 function App() {
-	
 	useEffect(() => {
 		setInterval(() => {
 			if (!get.autoplay() || noMoveAvailable || tfr || insuff) return;
@@ -28,6 +24,7 @@ function App() {
 	let eva = get.curEval();
 	let currentHalfMove = get.currentHalfMove();
 	let evamate = get.curEvalMate();
+	let playOptions = get.playOptions();
 	return (
 		<>
 			<div className="fixed flex mts w-full h-full items-center justify-center flex-col">
@@ -75,7 +72,7 @@ function App() {
 									: "1-0"
 								: "1/2 - 1/2"
 							: evamate
-							? "M" + Math.abs(eva * 100)
+							? "M" + Math.round(Math.abs(eva * 100))
 							: eva}
 					</div>
 				</div>
@@ -179,6 +176,58 @@ function App() {
 								borderColor: theme.whitePiece,
 								backgroundColor: theme.sel,
 							}}></div>
+					</div>
+				</div>
+				<div className="fixed gap-1 flex flex-col top-1 left-1">
+					<div className="flex gap-1">
+						<div
+							className="w-2 h-2 duration-200 rounded-full"
+							style={{
+								backgroundColor: theme.whitePiece,
+								opacity: playOptions.playAsWhite ? 1 : 0,
+							}}
+						/>
+						<div
+							className="w-2 h-2 duration-200 rounded-full"
+							style={{
+								backgroundColor: theme.whitePiece,
+								opacity: playOptions.showWhiteSuggestedMove
+									? 1
+									: 0,
+							}}
+						/>
+						<div
+							className="w-2 h-2 duration-200 rounded-full"
+							style={{
+								backgroundColor: theme.whitePiece,
+								opacity: playOptions.playAsWhiteAI ? 1 : 0,
+							}}
+						/>
+					</div>
+					<div className="flex gap-1">
+						<div
+							className="w-2 h-2 duration-200 rounded-full"
+							style={{
+								backgroundColor: theme.whitePiece,
+								opacity: playOptions.playAsBlack ? 1 : 0,
+							}}
+						/>
+						<div
+							className="w-2 h-2 duration-200 rounded-full"
+							style={{
+								backgroundColor: theme.whitePiece,
+								opacity: playOptions.showBlackSuggestedMove
+									? 1
+									: 0,
+							}}
+						/>
+						<div
+							className="w-2 h-2 duration-200 rounded-full"
+							style={{
+								backgroundColor: theme.whitePiece,
+								opacity: playOptions.playAsBlackAI ? 1 : 0,
+							}}
+						/>
 					</div>
 				</div>
 			</div>
