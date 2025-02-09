@@ -40,7 +40,7 @@ export async function getEval() {
 		set.curEvalMate(type == "mate");
 		set.curEval(score);
 	}
-	set.engineDepth(move[0].split(" ")[2])
+	set.engineDepth(move[0].split(" ")[2]);
 	let from = bestMove.charCodeAt(0) - 97 + parseInt(bestMove[1]) * 8 - 8;
 	let pieceCode = get.board()[from];
 	let piece: any =
@@ -62,10 +62,14 @@ export async function getEval() {
 	temp = false;
 	set.thinking(false);
 	set.bestMove(bestMove != "(none)" ? bestMove : "a1a1");
-	if(!get.turn())
-		performSuggestedMove()
+	let playOptions = get.playOptions();
+	let turn = get.turn();
+	if (
+		(turn && playOptions.playAsWhiteAI) ||
+		(!turn && playOptions.playAsBlackAI)
+	)
+		performSuggestedMove();
 	get.updater()((prev: any) => prev + 1);
-
 }
 export function getArrowPos(move: any) {
 	let from = [move.charCodeAt(0) - 97, 7 - (move.charCodeAt(1) - 49)];
@@ -422,6 +426,22 @@ export function checkForInsufficientMaterial(board: any) {
 		return false;
 	}
 }
+export function postMoveActions(vars: any, mv: any) {
+	vars.check = checkForCheck(vars.board, vars.turn);
+	vars.noMoveAvailable = checkForAvailableMoves(vars.board, vars.turn);
+	if (mv != "") {
+		if (vars.check && vars.noMoveAvailable) mv += "#";
+		else if (vars.check) mv += "+";
+		// if (timeline == 0) {
+		if (!vars.turn) vars.moveRecord.push([mv]);
+		else vars.moveRecord[vars.moveRecord.length - 1].push(mv);
+	}
+	// }
+	threeFoldRept.push(vars.board);
+	vars.threeFoldReptition = checkForThreeFoldRept(vars.board, threeFoldRept);
+	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
+	return vars;
+}
 export function promote(i: any, piece: any) {
 	let vars = get.all();
 	let temp = vars.board.split("");
@@ -439,20 +459,21 @@ export function promote(i: any, piece: any) {
 	vars.turn = !vars.turn;
 	vars.check = checkForCheck(vars.board, vars.turn);
 	vars.noMoveAvailable = checkForAvailableMoves(vars.board, vars.turn);
-	vars.currentMove += "=" + piece.toUpperCase();
-	if (vars.check && vars.noMoveAvailable) vars.currentMove += "#";
-	else if (vars.check) vars.currentMove += "+";
-	if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
-	else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
+	if (vars.currentMove != null) {
+		vars.currentMove += "=" + piece.toUpperCase();
+		if (vars.check && vars.noMoveAvailable) vars.currentMove += "#";
+		else if (vars.check) vars.currentMove += "+";
+		if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
+		else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
+	}
 	threeFoldRept.push(vars.board);
 	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
-
 	set.all(vars);
 	getEval();
 }
 export function performSuggestedMove() {
 	let move = get.bestMove();
-	if (move == "a1a1"||temp) return;
+	if (move == "a1a1" || temp) return;
 	let sp = move.length > 4 && "rnbq".indexOf(move[4]) != -1 ? move[4] : null;
 
 	let from = move.charCodeAt(0) - 97 + parseInt(move[1]) * 8 - 8;
@@ -471,7 +492,7 @@ export function performSuggestedMove() {
 	set.mvSq(
 		moveManager(from, get.board(), get.turn()) || new Array(64).fill(0)
 	);
-	
+
 	moveTo(to, document.getElementById(piece));
 	move = "a1a1";
 	if (sp) {
@@ -481,7 +502,6 @@ export function performSuggestedMove() {
 	move = "a1a1";
 }
 export function moveTo(i: any, piecex: any) {
-
 	let vars: any = get.all();
 	if (vars.promoting) return false;
 	if (i < 0 || i > 63) return false;
@@ -616,40 +636,44 @@ export function moveTo(i: any, piecex: any) {
 		vars.castling[1 + (vars.turn ? 2 : 0)] = false;
 	}
 	vars.to = i;
-	vars.currentHalfMove++;
-	vars.currentMaxMoves++;
+	// vars.currentHalfMove++;
+	// vars.currentMaxMoves++;
 	vars.from = vars.sel;
 	temp[i] = temp[vars.sel];
 	temp[vars.sel] = "-";
 	vars.board = temp.join("");
-	vars.positionHistory[vars.positionHistory.length - 1][6] = piecex.id;
-	vars.positionHistory.push([
-		vars.pieceKeys,
-		vars.fiftyMove,
-		vars.enpassant,
-		vars.castling,
-		vars.turn,
-		vars.board,
-		piecex.id,
-		vars.from,
-		vars.to,
-		vars.capturedPieces,
-	]);
+	console.log(vars.currentPosition);
+	vars.positionHistory[vars.currentPosition].pieceId = piecex.id;
+	let timeline = vars.positionHistory[vars.currentPosition].timeline + 1;
+	let curMove =
+		vars.positionHistory[vars.currentPosition].currentHalfMove + 1;
+	let nextPos = timeline + "-" + curMove;
+	if (vars.positionHistory[vars.currentPosition].next == null) {
+		timeline = vars.positionHistory[vars.currentPosition].timeline;
+		nextPos = timeline + "-" + curMove;
+		vars.positionHistory[vars.currentPosition].next = nextPos;
+	}
+	vars.positionHistory[nextPos] = {
+		pieceKeys: vars.pieceKeys,
+		fiftyMove: vars.fiftyMove,
+		enpassant: vars.enpassant,
+		castling: vars.castling,
+		turn: vars.turn,
+		board: vars.board,
+		pieceId: piecex.id,
+		from: vars.sel,
+		to: i,
+		capturedPieces: vars.capturedPieces,
+		currentHalfMove: curMove,
+		timeline,
+		previous: vars.currentPosition,
+		next: null,
+	};
+	vars.currentPosition = nextPos;
 	if (!vars.promoting) {
-		vars.check = checkForCheck(vars.board, vars.turn);
-		vars.noMoveAvailable = checkForAvailableMoves(vars.board, vars.turn);
-		if (vars.check && vars.noMoveAvailable == 0) mv += "#";
-		else if (vars.check) mv += "+";
-		if (!vars.turn) vars.moveRecord.push([mv]);
-		else vars.moveRecord[vars.moveRecord.length - 1].push(mv);
-		threeFoldRept.push(vars.board);
-		vars.threeFoldReptition = checkForThreeFoldRept(
-			vars.board,
-			threeFoldRept
-		);
-		vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
+		vars = postMoveActions(vars, mv);
 	} else {
-		vars.currentMove = mv;
+		vars.currentMove = timeline == 0 ? mv : null;
 	}
 	setData(vars.enpassant, vars.castling);
 	vars.pc = "-1";

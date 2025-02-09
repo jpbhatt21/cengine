@@ -42,6 +42,11 @@ let promoteKeys = [
 	[48, 40, 32, 56],
 	[8, 16, 24, 0],
 ];
+let playAsWhite = true; 
+let playAsBlack = true;
+let playAsWhiteAI = false;
+let playAsBlackAI = false;
+
 let sel = -1;
 let bestMove="a1a1"
 let curEval=0;
@@ -67,11 +72,34 @@ let threeFoldReptition = false;
 let insufficientMaterial=checkForInsufficientMaterial(board);
 let thinking = true     ;   
 let engineDepth = "";
+
 let currentHalfMove=0;
 let currentMaxMoves=0;
-let positionHistory: any[] = [[pieceKeys,fiftyMove,enpassant,castling,turn,board,"dsadsada",-1,-1,capturedPieces]];
+let currentPosition="0-0"
+let mov={
+    pieceKeys:pieceKeys,
+    fiftyMove:fiftyMove,
+    enpassant:enpassant,
+    castling:castling,
+    turn:turn,
+    board:board,
+    pieceId:"dsadsda",
+    from:-1,
+    to:-1,
+    capturedPieces:capturedPieces,
+    currentHalfMove:currentHalfMove,
+    timeline:0,
+    previous:null,
+    next:null,
+}
+let positionHistory: any = {
+    "0-0": mov,
+};
+
 export let get={
+    playOptions:()=>{return {playAsWhite,playAsBlack,playAsWhiteAI,playAsBlackAI}},
     engineDepth:()=>{return engineDepth},
+    currentPosition:()=>{return currentPosition},
     positionHistory:()=>{return positionHistory},
     currentMaxMoves:()=>{return currentMaxMoves},
     currentHalfMove:()=>{return currentHalfMove},
@@ -106,10 +134,12 @@ export let get={
     promotion:()=>{return promotion},
     currentMove:()=>{return currentMove},
     clearAllTD:()=>{return clearAllTD},
-    all:()=>{return {capturedPieces,currentHalfMove,positionHistory,currentMaxMoves,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
+    all:()=>{return {currentPosition,capturedPieces,currentHalfMove,positionHistory,currentMaxMoves,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
 
 }
 export let set={
+    setPlayOptions:(val:any)=>{playAsWhite=val.playAsWhite;playAsBlack=val.playAsBlack;playAsWhiteAI=val.playAsWhiteAI;playAsBlackAI=val.playAsBlackAI},
+    currentPosition:(val:string)=>{currentPosition=val},
     engineDepth:(val:string)=>{engineDepth=val},
     positionHistory:(val:any)=>{positionHistory=val},
     currentMaxMoves:(val:number)=>{currentMaxMoves=val},
@@ -173,6 +203,7 @@ export let set={
         currentHalfMove=val.currentHalfMove;
         currentMaxMoves=val.currentMaxMoves;
         positionHistory=val.positionHistory;
+        currentPosition=val.currentPosition;
     }
 
 
