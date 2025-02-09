@@ -7,7 +7,6 @@ import {
 	getEval,
 	moveTo,
 	normalize,
-	performSuggestedMove,
 	postMoveActions,
 	promote,
 } from "./helperFunctions";
