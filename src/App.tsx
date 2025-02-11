@@ -12,6 +12,21 @@ function filter(obj: any, predicate: any) {
 	}
 	return obj;
 }
+function getAltMoveList(arr:any,halfMove:number) {
+	let mv=((Math.floor((halfMove-1)/2)+1)+(halfMove%2==0?". ... ":". ")+"|").repeat(arr.length).split("|")
+	for (let i = 0; i < arr.length; i++) {
+		for (let j = 0; j < arr[i].length; j++) {
+			mv[i]+=arr[i][j][0]+" "
+		}
+	}
+	console.log(mv)
+	return <>
+	{
+		mv.map((x)=><label>{x}</label>)
+	}
+	</>
+
+}
 function App() {
 	useEffect(() => {
 		setInterval(() => {
@@ -103,8 +118,13 @@ function App() {
 		);
 		key=Object.keys(nullCount);
 	}
-	mvr=mvr["0-0"].next
-	console.log(mvr)
+	mvr=mvr["0-0"].next[0]!==null?mvr["0-0"].next:[]
+	let temp=[]
+	for (let i=0;i<mvr.length;i+=2){
+		temp.push(mvr.slice(i,i+2))
+	}
+	mvr=temp
+	
 
 	return (
 		<>
@@ -205,7 +225,7 @@ function App() {
 							}}>
 							Moves
 						</label>
-						{moveRecord.map((x, i) => (
+						{mvr.map((x:any, i:any) => (
 							<div
 								key={"move" + i}
 								className="w-full  text-[calc((50vw-37.5vmin)*2/80)] flex"
@@ -229,7 +249,9 @@ function App() {
 									}}>
 									<label className="fadein">{i + 1}</label>
 								</label>
-								{x.map((y, j) => (
+								<div className="flex flex-col w-[90%]">
+									<div className="flex w-full">
+									{x.map((y:any, j:any) => (
 									<label
 										style={{
 											borderRight:
@@ -244,11 +266,33 @@ function App() {
 													? theme.blackBoard
 													: theme.blackPiece,
 										}}
-										className="w-[45%] fadein py-1  text-center"
+										className="w-[50%] fadein py-1  text-center"
 										key={"move" + i + j}>
-										{y}
+										{y[0]}
 									</label>
 								))}
+										</div>
+									<label className="w-full flex-col">
+										{
+											x.map((y:any, j:any) => (
+												y.length > 1 && (<label
+													className="w-full px-2 text-center"
+													style={{
+														backgroundColor:
+															currentHalfMove - 1 ==
+															i * 2 + j
+																? "#313939"
+																: i % 2 == 0
+																? theme.blackBoard
+																: theme.blackPiece,
+													}}
+													key={"move" + i + j}>
+													{getAltMoveList(y.slice(1),i*2+j+1)}	
+												</label>)
+											))
+										}
+									</label>
+								</div>
 							</div>
 						))}
 						<div
