@@ -206,7 +206,7 @@ function Board({ setUpdate }: any) {
 				setMoveableSquares(new Array(64).fill(0));
 
 			}
-			set.setPlayOptions(playOptions);
+			set.playOptions(playOptions);
 			setUpdate((prev: any) => prev + 1);
 		});
 	}, []);

@@ -75,7 +75,7 @@ let engineDepth = "";
 let curEval=0;
 let bestMove="a1a1"
 let curEvalMate=false;
-
+let timelineMoves=[[1,0]]
 let currentHalfMove=0;
 let currentMaxMoves=0;
 let currentPosition="0-0"
@@ -94,12 +94,14 @@ let mov={
     timeline:0,
     previous:null,
     next:null,
+    move:"",
 }
 let positionHistory: any = {
     "0-0": mov,
 };
 
 export let get={
+    timelineMoves:()=>{return timelineMoves},
     playOptions:()=>{return {playAsWhite,playAsBlack,playAsWhiteAI,playAsBlackAI,showWhiteSuggestedMove,showBlackSuggestedMove}},
     engineDepth:()=>{return engineDepth},
     currentPosition:()=>{return currentPosition},
@@ -137,11 +139,12 @@ export let get={
     promotion:()=>{return promotion},
     currentMove:()=>{return currentMove},
     clearAllTD:()=>{return clearAllTD},
-    all:()=>{return {currentPosition,capturedPieces,currentHalfMove,positionHistory,currentMaxMoves,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
+    all:()=>{return {timelineMoves,currentPosition,capturedPieces,currentHalfMove,positionHistory,currentMaxMoves,insufficientMaterial,md,pc,board,moveRecord,pieceKeys,promoteKeys,sel,to,from,noMoveAvailable,turn,mvSq,check,enpassant,castling,fiftyMove,moves,promoting,promotion,currentMove,clearAllTD,threeFoldReptition}}
 
 }
 export let set={
-    setPlayOptions:(val:any)=>{playAsWhite=val.playAsWhite;playAsBlack=val.playAsBlack;playAsWhiteAI=val.playAsWhiteAI;playAsBlackAI=val.playAsBlackAI;showWhiteSuggestedMove=val.showWhiteSuggestedMove;showBlackSuggestedMove=val.showBlackSuggestedMove},
+    timelineMoves:(val:number[][])=>{timelineMoves=val},
+    playOptions:(val:any)=>{playAsWhite=val.playAsWhite;playAsBlack=val.playAsBlack;playAsWhiteAI=val.playAsWhiteAI;playAsBlackAI=val.playAsBlackAI;showWhiteSuggestedMove=val.showWhiteSuggestedMove;showBlackSuggestedMove=val.showBlackSuggestedMove},
     currentPosition:(val:string)=>{currentPosition=val},
     engineDepth:(val:string)=>{engineDepth=val},
     positionHistory:(val:any)=>{positionHistory=val},
@@ -207,6 +210,7 @@ export let set={
         currentMaxMoves=val.currentMaxMoves;
         positionHistory=val.positionHistory;
         currentPosition=val.currentPosition;
+        timelineMoves=val.timelineMoves;
     }
 
 

@@ -435,6 +435,7 @@ export function postMoveActions(vars: any, mv: any) {
 		// if (timeline == 0) {
 		if (!vars.turn) vars.moveRecord.push([mv]);
 		else vars.moveRecord[vars.moveRecord.length - 1].push(mv);
+		vars.positionHistory[vars.currentPosition].move = mv;
 	}
 	// }
 	threeFoldRept.push(vars.board);
@@ -465,7 +466,10 @@ export function promote(i: any, piece: any) {
 		else if (vars.check) vars.currentMove += "+";
 		if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
 		else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
+
 	}
+	vars.positionHistory[vars.currentPosition].board = vars.board;
+	vars.positionHistory[vars.currentPosition].move = vars.currentMove;
 	threeFoldRept.push(vars.board);
 	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
 	set.all(vars);
@@ -643,15 +647,27 @@ export function moveTo(i: any, piecex: any) {
 	temp[vars.sel] = "-";
 	vars.board = temp.join("");
 	vars.positionHistory[vars.currentPosition].pieceId = piecex.id;
-	let timeline = vars.positionHistory[vars.currentPosition].timeline + 1;
+	let timeline = vars.positionHistory[vars.currentPosition].timeline;
 	let curMove =
 		vars.positionHistory[vars.currentPosition].currentHalfMove + 1;
 	let nextPos = timeline + "-" + curMove;
 	if (vars.positionHistory[vars.currentPosition].next == null) {
-		timeline = vars.positionHistory[vars.currentPosition].timeline;
-		nextPos = timeline + "-" + curMove;
 		vars.positionHistory[vars.currentPosition].next = nextPos;
+		vars.timelineMoves[timeline][1] +=1;
+	}else{
+		while(vars.positionHistory[nextPos]){
+			if(vars.positionHistory[nextPos].board!=vars.board){
+				timeline+=1
+				nextPos = timeline + "-" + curMove;
+			}
+			else{
+
+				break;
+			}
+		}
+		vars.timelineMoves.push([curMove,curMove]);
 	}
+	
 	vars.positionHistory[nextPos] = {
 		pieceKeys: vars.pieceKeys,
 		fiftyMove: vars.fiftyMove,
@@ -668,7 +684,7 @@ export function moveTo(i: any, piecex: any) {
 		previous: vars.currentPosition,
 		next: null,
 	};
-	if(timeline!=0)mv=""
+	// if(timeline!=0)mv=""
 	vars.currentPosition = nextPos;
 	if (!vars.promoting) {
 		vars = postMoveActions(vars, mv);

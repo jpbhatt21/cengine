@@ -4,7 +4,14 @@ import Board from "./Board";
 import { useEffect, useState } from "react";
 import { getEval, performSuggestedMove } from "./helperFunctions";
 getEval();
-
+function filter(obj: any, predicate: any) {
+	for (let key in obj) {
+		if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
+			delete obj[key];
+		}
+	}
+	return obj;
+}
 function App() {
 	useEffect(() => {
 		setInterval(() => {
@@ -25,6 +32,80 @@ function App() {
 	let currentHalfMove = get.currentHalfMove();
 	let evamate = get.curEvalMate();
 	let playOptions = get.playOptions();
+	let positionHistory = get.positionHistory();
+	// let mvr=[]
+	// let timelineMoves = get.timelineMoves();
+	// console.log(positionHistory)
+	// for (let i = 0; i < timelineMoves.length; i++) {
+	// 	let mvt=[]
+	// 	for(let j=timelineMoves[i][0]; j<=timelineMoves[i][1]; j++){
+	// 		console.log(i+"-"+j)
+	// 		mvt.push(positionHistory[i+"-"+j].move)
+	// 	}
+	// 	mvr.push(mvt)
+
+	// }
+	// console.log(mvr)
+	let keys = Object.keys(positionHistory);
+	let mvr: any = {
+		"0-0": {
+			move: "0-0",
+			alt: [],
+			next: [positionHistory["0-0"].next],
+			nx: null,
+			prev: null,
+		},
+	};
+	for (let i = 1; i < keys.length; i++) {
+		let pos = positionHistory[keys[i]];
+		if (!pos) continue;
+		if (mvr[pos.previous].nx == null) {
+			mvr[pos.previous].nx = keys[i];
+		}
+		mvr[keys[i]] = {
+			move: pos.move,
+			alt: [],
+			next: pos.next ? [pos.next] : [],
+			nx: null,
+			prev: pos.previous,
+		};
+	}
+	let nullCount = filter(
+		JSON.parse(JSON.stringify(mvr)),
+		(x: any) => x.nx == null
+	);
+	let key:any=Object.keys(nullCount);
+	while (
+		(key.length > 0 &&
+		!nullCount.hasOwnProperty("0-0"))||key.length>1
+	) {
+		key = key[key.length - 1];
+		let pos = mvr[key];
+		let prev = mvr[pos.prev];
+		if (prev.next[0] == key) {
+			prev.next = [
+				[pos.move, ...pos.alt],
+				...(pos.next.length > 0 ? pos.next : []),
+			];
+		} else {
+			mvr[prev.next].alt.push([
+				[pos.move, ...pos.alt],
+				...(pos.next.length > 0 ? pos.next : []),
+			]);
+		}
+		prev.nx = null;
+		mvr[pos.prev] = prev;
+		delete mvr[key];
+
+		nullCount = filter(
+			JSON.parse(JSON.stringify(mvr)),
+			(x: any) => x.nx == null
+		);
+		key=Object.keys(nullCount);
+	}
+	mvr=mvr["0-0"].next
+	console.log(mvr)
+
 	return (
 		<>
 			<div className="fixed flex mts w-full h-full items-center justify-center flex-col">
