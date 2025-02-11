@@ -109,7 +109,7 @@ function Board({ setUpdate }: any) {
 			positionHistory: any,
 			moveNext = false
 		) {
-			
+			let playOptions = get.playOptions();
 			let px = document.getElementById(data.pieceId);
 			if (px) {
 				px.style.transitionDuration = "0.2s";
@@ -122,6 +122,7 @@ function Board({ setUpdate }: any) {
 			set.board(data.board);
 
 			let newPos = moveNext ? data.next : data.previous;
+			
 			if (
 				((data.turn && playOptions.playAsWhiteAI) ||
 					(!data.turn && playOptions.playAsBlackAI)) &&
@@ -156,7 +157,6 @@ function Board({ setUpdate }: any) {
 					set.thinking(true);
 					setUpdate((prev: any) => prev + 1);
 					setMoveableSquares(new Array(64).fill(0));
-
 					updatePosition(
 						prevPos,
 						positionHistory[prevPos],

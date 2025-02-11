@@ -12,20 +12,143 @@ function filter(obj: any, predicate: any) {
 	}
 	return obj;
 }
-function getAltMoveList(arr:any,halfMove:number) {
-	let mv=((Math.floor((halfMove-1)/2)+1)+(halfMove%2==0?". ... ":". ")+"|").repeat(arr.length).split("|")
-	for (let i = 0; i < arr.length; i++) {
-		for (let j = 0; j < arr[i].length; j++) {
-			mv[i]+=arr[i][j][0]+" "
-		}
-	}
-	console.log(mv)
-	return <>
-	{
-		mv.map((x)=><label>{x}</label>)
-	}
-	</>
+function getAltMoveList(arr: any, halfMove: number) {
+	arr = arr.map((x:any) => {
+		let alts = [];
 
+		let move =" "+
+			(halfMove % 2 == 0
+				? Math.floor((halfMove - 1) / 2) + 1 + ". ... "
+				: "");
+		for (let i = 0; i < x.length; i++) {
+			move +=
+				((halfMove + i) % 2 == 1
+					? (i == 0 ? "" : " ~ ") +
+					  (Math.floor((halfMove + i - 1) / 2) + 1) +
+					  ". "
+					: "") +
+				x[i][0] +
+				" ";
+			if (x[i].length > 1) {
+				alts.push({ alt: x[i].slice(1), ind: i });
+			}
+		}
+		return (
+			<div className="flex w-full flex-col items-end gap-1">
+				<div className="w-full flex flex-wrap  text-[calc((50vw-37.5vmin)*2/80)]"
+				style={{
+					border: "1px solid " + theme.pieceOutline,
+				}}
+				>
+					{move.split("~").map((x) => (
+						<div
+							className="  flex gap-1 p-1  "
+							style={{
+								border: "1px solid " + theme.pieceOutline,
+							}}
+							>
+							{x.trim().split(" ").map((y) => (
+								<label
+									className="p-[2px]"
+									style={{
+										backgroundColor: y.includes("|||")
+											? theme.whiteBoard
+											: "",
+									}}>
+									{y.replace("|||", "")}
+								</label>
+							))}
+						</div>
+					))}
+				</div>
+				{alts.map((y: any) => (
+					<label
+						// style={{
+						// 	backgroundColor:
+						// 		halfMove == get.currentHalfMove()
+						// 			? "#313939"
+						// 			: halfMove % 2 == 0
+						// 			? theme.blackBoard
+						// 			: theme.blackPiece,
+						// }}
+						className="text-[calc((50vw-37.5vmin)*2/80)] w-11/12">
+						{getAltMoveList(y.alt, halfMove + y.ind)}
+					</label>
+				))}
+			</div>
+		);
+	});
+	return <>{arr.map((x: any) => x)}</>;
+}
+function createMoveRecord() {
+	let positionHistory = get.positionHistory();
+	console.log(positionHistory);
+	let keys = Object.keys(positionHistory);
+	let curPos = get.currentPosition();
+	console.log(curPos);
+	let mvr: any = {
+		"0-0": {
+			move: "0-0",
+			alt: [],
+			next: [positionHistory["0-0"].next],
+			nx: null,
+			prev: null,
+		},
+	};
+	for (let i = 1; i < keys.length; i++) {
+		let pos = positionHistory[keys[i]];
+		if (!pos) continue;
+		if (mvr[pos.previous] && mvr[pos.previous].nx == null) {
+			mvr[pos.previous].nx = keys[i];
+		}
+		mvr[keys[i]] = {
+			move: (curPos == keys[i] ? "|||" : "") + pos.move,
+			alt: [],
+			next: pos.next ? [pos.next] : [],
+			nx: null,
+			prev: pos.previous,
+		};
+	}
+	let nullCount = filter(
+		JSON.parse(JSON.stringify(mvr)),
+		(x: any) => x.nx == null
+	);
+	let key: any = Object.keys(nullCount);
+	while (
+		(key.length > 0 && !nullCount.hasOwnProperty("0-0")) ||
+		key.length > 1
+	) {
+		key = key[key.length - 1];
+		let pos = mvr[key];
+		let prev = mvr[pos.prev];
+		if(!prev) break;
+		if (prev.next[0] == key) {
+			prev.next = [
+				[pos.move, ...pos.alt],
+				...(pos.next.length > 0 ? pos.next : []),
+			];
+		} else if (mvr[prev.next]) {
+			mvr[prev.next].alt.push([
+				[pos.move, ...pos.alt],
+				...(pos.next.length > 0 ? pos.next : []),
+			]);
+		}
+		prev.nx = null;
+		mvr[pos.prev] = prev;
+		delete mvr[key];
+
+		nullCount = filter(
+			JSON.parse(JSON.stringify(mvr)),
+			(x: any) => x.nx == null
+		);
+		key = Object.keys(nullCount);
+	}
+	mvr = mvr["0-0"].next[0] !== null ? mvr["0-0"].next : [];
+	let temp = [];
+	for (let i = 0; i < mvr.length; i += 2) {
+		temp.push(mvr.slice(i, i + 2));
+	}
+	return temp;
 }
 function App() {
 	useEffect(() => {
@@ -44,10 +167,10 @@ function App() {
 	let insuff = get.insufficientMaterial();
 	let turn = get.turn();
 	let eva = get.curEval();
-	let currentHalfMove = get.currentHalfMove();
+	// let currentHalfMove = get.currentHalfMove();
 	let evamate = get.curEvalMate();
 	let playOptions = get.playOptions();
-	let positionHistory = get.positionHistory();
+
 	// let mvr=[]
 	// let timelineMoves = get.timelineMoves();
 	// console.log(positionHistory)
@@ -61,70 +184,8 @@ function App() {
 
 	// }
 	// console.log(mvr)
-	let keys = Object.keys(positionHistory);
-	let mvr: any = {
-		"0-0": {
-			move: "0-0",
-			alt: [],
-			next: [positionHistory["0-0"].next],
-			nx: null,
-			prev: null,
-		},
-	};
-	for (let i = 1; i < keys.length; i++) {
-		let pos = positionHistory[keys[i]];
-		if (!pos) continue;
-		if (mvr[pos.previous].nx == null) {
-			mvr[pos.previous].nx = keys[i];
-		}
-		mvr[keys[i]] = {
-			move: pos.move,
-			alt: [],
-			next: pos.next ? [pos.next] : [],
-			nx: null,
-			prev: pos.previous,
-		};
-	}
-	let nullCount = filter(
-		JSON.parse(JSON.stringify(mvr)),
-		(x: any) => x.nx == null
-	);
-	let key:any=Object.keys(nullCount);
-	while (
-		(key.length > 0 &&
-		!nullCount.hasOwnProperty("0-0"))||key.length>1
-	) {
-		key = key[key.length - 1];
-		let pos = mvr[key];
-		let prev = mvr[pos.prev];
-		if (prev.next[0] == key) {
-			prev.next = [
-				[pos.move, ...pos.alt],
-				...(pos.next.length > 0 ? pos.next : []),
-			];
-		} else {
-			mvr[prev.next].alt.push([
-				[pos.move, ...pos.alt],
-				...(pos.next.length > 0 ? pos.next : []),
-			]);
-		}
-		prev.nx = null;
-		mvr[pos.prev] = prev;
-		delete mvr[key];
 
-		nullCount = filter(
-			JSON.parse(JSON.stringify(mvr)),
-			(x: any) => x.nx == null
-		);
-		key=Object.keys(nullCount);
-	}
-	mvr=mvr["0-0"].next[0]!==null?mvr["0-0"].next:[]
-	let temp=[]
-	for (let i=0;i<mvr.length;i+=2){
-		temp.push(mvr.slice(i,i+2))
-	}
-	mvr=temp
-	
+	let mvr = createMoveRecord();
 
 	return (
 		<>
@@ -225,7 +286,7 @@ function App() {
 							}}>
 							Moves
 						</label>
-						{mvr.map((x:any, i:any) => (
+						{mvr.map((x: any, i: any) => (
 							<div
 								key={"move" + i}
 								className="w-full  text-[calc((50vw-37.5vmin)*2/80)] flex"
@@ -251,47 +312,55 @@ function App() {
 								</label>
 								<div className="flex flex-col w-[90%]">
 									<div className="flex w-full">
-									{x.map((y:any, j:any) => (
-									<label
-										style={{
-											borderRight:
-												j == 0
-													? "1px solid " +
-													  theme.pieceOutline
-													: "",
-											backgroundColor:
-												currentHalfMove - 1 == i * 2 + j
-													? "#313939"
-													: i % 2 == 0
-													? theme.blackBoard
-													: theme.blackPiece,
-										}}
-										className="w-[50%] fadein py-1  text-center"
-										key={"move" + i + j}>
-										{y[0]}
-									</label>
-								))}
-										</div>
-									<label className="w-full flex-col">
-										{
-											x.map((y:any, j:any) => (
-												y.length > 1 && (<label
-													className="w-full px-2 text-center"
-													style={{
-														backgroundColor:
-															currentHalfMove - 1 ==
-															i * 2 + j
-																? "#313939"
-																: i % 2 == 0
-																? theme.blackBoard
-																: theme.blackPiece,
-													}}
-													key={"move" + i + j}>
-													{getAltMoveList(y.slice(1),i*2+j+1)}	
-												</label>)
-											))
-										}
-									</label>
+										{x.map((y: any, j: any) => (
+											<label
+												style={{
+													borderRight:
+														j == 0
+															? "1px solid " +
+															  theme.pieceOutline
+															: "",
+													backgroundColor:
+														y[0].includes("|||")
+															? theme.whiteBoard
+															:"",
+													borderBottom:
+														x[0].length>1||(x.length>1&&x[1].length>1)
+															? "1px solid " +
+															  theme.pieceOutline
+															: "",
+												}}
+												className="w-[50%] fadein py-1  text-center"
+												key={"move" + i + j}>
+												{y[0].replace("|||", "")}
+											</label>
+										))}
+									</div>
+									<div className="w-full flex-col">
+										{x.map(
+											(y: any, j: any) =>
+												y.length > 1 && (
+													<div
+														className="w-full min-h-fit flex flex-col px-2 py-1"
+														// style={{
+														// 	backgroundColor:
+														// 		currentHalfMove -
+														// 			1 ==
+														// 		i * 2 + j
+														// 			? "#313939"
+														// 			: i % 2 == 0
+														// 			? theme.blackBoard
+														// 			: theme.blackPiece,
+														// }}
+														key={"move" + i + j}>
+														{getAltMoveList(
+															y.slice(1),
+															i * 2 + j + 1
+														)}
+													</div>
+												)
+										)}
+									</div>
 								</div>
 							</div>
 						))}
