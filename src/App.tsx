@@ -15,7 +15,6 @@ function filter(obj: any, predicate: any) {
 function getAltMoveList(arr: any, halfMove: number) {
 	arr = arr.map((x:any) => {
 		let alts = [];
-
 		let move =" "+
 			(halfMove % 2 == 0
 				? Math.floor((halfMove - 1) / 2) + 1 + ". ... "
@@ -61,16 +60,8 @@ function getAltMoveList(arr: any, halfMove: number) {
 						</div>
 					))}
 				</div>
-				{alts.map((y: any) => (
+				{alts&&alts.length>0&&alts.map((y: any) => (
 					<label
-						// style={{
-						// 	backgroundColor:
-						// 		halfMove == get.currentHalfMove()
-						// 			? "#313939"
-						// 			: halfMove % 2 == 0
-						// 			? theme.blackBoard
-						// 			: theme.blackPiece,
-						// }}
 						className="text-[calc((50vw-37.5vmin)*2/80)] w-11/12">
 						{getAltMoveList(y.alt, halfMove + y.ind)}
 					</label>
@@ -167,24 +158,8 @@ function App() {
 	let insuff = get.insufficientMaterial();
 	let turn = get.turn();
 	let eva = get.curEval();
-	// let currentHalfMove = get.currentHalfMove();
 	let evamate = get.curEvalMate();
 	let playOptions = get.playOptions();
-
-	// let mvr=[]
-	// let timelineMoves = get.timelineMoves();
-	// console.log(positionHistory)
-	// for (let i = 0; i < timelineMoves.length; i++) {
-	// 	let mvt=[]
-	// 	for(let j=timelineMoves[i][0]; j<=timelineMoves[i][1]; j++){
-	// 		console.log(i+"-"+j)
-	// 		mvt.push(positionHistory[i+"-"+j].move)
-	// 	}
-	// 	mvr.push(mvt)
-
-	// }
-	// console.log(mvr)
-
 	let mvr = createMoveRecord();
 
 	return (
