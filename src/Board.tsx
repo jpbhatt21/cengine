@@ -7,8 +7,8 @@ import {
 	getEval,
 	moveTo,
 	normalize,
-	postMoveActions,
 	promote,
+	updatePosition,
 } from "./helperFunctions";
 import { pieces, theme } from "./theme";
 import { moveManager } from "./PieceMoves";
@@ -37,7 +37,7 @@ function Board({ setUpdate }: any) {
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
-			if (!piece) {
+			if (!piece||(get.turn()&&!get.playOptions().playAsWhite)||(!get.turn()&&!get.playOptions().playAsBlack)) {
 				return;
 			}
 			if (get.md()) {
@@ -103,50 +103,7 @@ function Board({ setUpdate }: any) {
 			}, 500);
 			set.clearAllTD(clearAllTD);
 		});
-		function updatePosition(
-			position: any,
-			data: any,
-			positionHistory: any,
-			moveNext = false
-		) {
-			let playOptions = get.playOptions();
-			let px = document.getElementById(data.pieceId);
-			if (px) {
-				px.style.transitionDuration = "0.2s";
-			}
-			set.pieceKeys(data.pieceKeys);
-			set.fiftyMove(data.fiftyMove);
-			set.enpassant(data.enpassant);
-			set.castling(data.castling);
-			set.turn(data.turn);
-			set.board(data.board);
-
-			let newPos = moveNext ? data.next : data.previous;
-			
-			if (
-				((data.turn && playOptions.playAsWhiteAI) ||
-					(!data.turn && playOptions.playAsBlackAI)) &&
-				newPos != null
-			) {
-				updatePosition(
-					newPos,
-					positionHistory[newPos],
-					positionHistory
-				);
-				
-			} else {
-				set.currentPosition(position);
-				set.from(data.from);
-				set.to(data.to);
-				set.capturedPieces(data.capturedPieces);
-				set.sel(-1);
-				postMoveActions(get.all(), "");
-				if (data.next == null) getEval();
-				set.thinking(false);
-				
-			}
-			setUpdate((prev: any) => prev + 1);
-		}
+		
 		document.addEventListener("keydown", (e) => {
 			let positionHistory = get.positionHistory();
 			let currentPosition = get.currentPosition();
@@ -159,8 +116,6 @@ function Board({ setUpdate }: any) {
 					setMoveableSquares(new Array(64).fill(0));
 					updatePosition(
 						prevPos,
-						positionHistory[prevPos],
-						positionHistory
 					);
 				}
 			}
@@ -172,11 +127,12 @@ function Board({ setUpdate }: any) {
 					setMoveableSquares(new Array(64).fill(0));
 					updatePosition(
 						nextPos,
-						positionHistory[nextPos],
-						positionHistory,
 						true
 					);
 				}
+			}
+			if(e.code=="KeyF"){
+				flipBoard=!flipBoard;
 			}
 		});
 		document.addEventListener("keyup", (e) => {
@@ -418,11 +374,7 @@ function Board({ setUpdate }: any) {
 										]({
 											onMouseDown: (e: any) => {
 												if (promoting) return;
-												if (
-													get.currentHalfMove() <
-													get.currentMaxMoves()
-												)
-													return;
+												
 												if (
 													(turn &&
 														playOptions.playAsWhite &&

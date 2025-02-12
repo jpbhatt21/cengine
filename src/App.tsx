@@ -2,7 +2,7 @@ import { theme } from "./theme";
 import { get, set } from "./variables";
 import Board from "./Board";
 import { useEffect, useState } from "react";
-import { getEval, performSuggestedMove } from "./helperFunctions";
+import { getEval, performSuggestedMove, updatePosition } from "./helperFunctions";
 getEval();
 function filter(obj: any, predicate: any) {
 	for (let key in obj) {
@@ -12,8 +12,8 @@ function filter(obj: any, predicate: any) {
 	}
 	return obj;
 }
-function getAltMoveList(arr: any, halfMove: number) {
-	arr = arr.map((x:any) => {
+function getAltMoveList(arr2: any, halfMove: number) {
+	let arr = arr2.map((x:any,i:any) => {
 		let alts = [];
 		let move =" "+
 			(halfMove % 2 == 0
@@ -26,7 +26,7 @@ function getAltMoveList(arr: any, halfMove: number) {
 					  (Math.floor((halfMove + i - 1) / 2) + 1) +
 					  ". "
 					: "") +
-				x[i][0] +
+				x[i][0].move +
 				" ";
 			if (x[i].length > 1) {
 				alts.push({ alt: x[i].slice(1), ind: i });
@@ -39,16 +39,26 @@ function getAltMoveList(arr: any, halfMove: number) {
 					border: "1px solid " + theme.pieceOutline,
 				}}
 				>
-					{move.split("~").map((x) => (
+					{move.split("~").map((x,j:any) => (
 						<div
 							className="  flex gap-1 p-1  "
 							style={{
 								border: "1px solid " + theme.pieceOutline,
 							}}
 							>
-							{x.trim().split(" ").map((y) => (
+							{x.trim().split(" ").map((y,k:any) => (
 								<label
 									className="p-[2px]"
+									onClick={() => {
+										if(k!==0){
+											
+											let key=arr2[i][j*2+k-1][0].key;
+											updatePosition(
+												key,
+												true
+											)
+										}
+									}}
 									style={{
 										backgroundColor: y.includes("|||")
 											? theme.whiteBoard
@@ -73,10 +83,10 @@ function getAltMoveList(arr: any, halfMove: number) {
 }
 function createMoveRecord() {
 	let positionHistory = get.positionHistory();
-	console.log(positionHistory);
+	// console.log(positionHistory);
 	let keys = Object.keys(positionHistory);
 	let curPos = get.currentPosition();
-	console.log(curPos);
+	// console.log(curPos);
 	let mvr: any = {
 		"0-0": {
 			move: "0-0",
@@ -93,7 +103,7 @@ function createMoveRecord() {
 			mvr[pos.previous].nx = keys[i];
 		}
 		mvr[keys[i]] = {
-			move: (curPos == keys[i] ? "|||" : "") + pos.move,
+			move: {move:(curPos == keys[i] ? "|||" : "") + pos.move,key:keys[i]},
 			alt: [],
 			next: pos.next ? [pos.next] : [],
 			nx: null,
@@ -296,7 +306,7 @@ function App() {
 															  theme.pieceOutline
 															: "",
 													backgroundColor:
-														y[0].includes("|||")
+														y[0].move.includes("|||")
 															? theme.whiteBoard
 															:"",
 													borderBottom:
@@ -306,8 +316,14 @@ function App() {
 															: "",
 												}}
 												className="w-[50%] fadein py-1  text-center"
+												onClick={() => {
+													let key=y[0].key;
+													updatePosition(
+														key,
+														true)
+												}}
 												key={"move" + i + j}>
-												{y[0].replace("|||", "")}
+												{y[0].move.replace("|||", "")}
 											</label>
 										))}
 									</div>

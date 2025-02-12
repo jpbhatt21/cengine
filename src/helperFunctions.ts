@@ -6,7 +6,6 @@ import {
 } from "./PieceMoves";
 import { get, set } from "./variables";
 let temp = false;
-let threeFoldRept: any = [];
 export async function getEval() {
 	temp = true;
 	let res = { eval: "", move: "" };
@@ -388,12 +387,18 @@ export function clearPieces(def: boolean = true) {
 	}
 	set.clearAllTD(null);
 }
-export function checkForThreeFoldRept(board: any, threeFoldRept: any) {
-	threeFoldRept = threeFoldRept.filter((x: any) => x == board);
-	if (threeFoldRept.length >= 3) {
-		return true;
+export function checkForThreeFoldRept(currentPosition: any,positionHistory: any) {
+	let count = 0;
+	let board = positionHistory[currentPosition].board;
+	while(currentPosition!=null){
+		if(positionHistory[currentPosition].board==board){
+			count++;
+		}
+		currentPosition=positionHistory[currentPosition].previous;
+		
 	}
-	return false;
+	
+	return count>=3;
 }
 export function checkForInsufficientMaterial(board: any) {
 	let whiteBishopCount = 0;
@@ -438,8 +443,7 @@ export function postMoveActions(vars: any, mv: any) {
 		vars.positionHistory[vars.currentPosition].move = mv;
 	}
 	// }
-	threeFoldRept.push(vars.board);
-	vars.threeFoldReptition = checkForThreeFoldRept(vars.board, threeFoldRept);
+	vars.threeFoldReptition = checkForThreeFoldRept(vars.currentPosition,vars.positionHistory);
 	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
 	return vars;
 }
@@ -466,11 +470,9 @@ export function promote(i: any, piece: any) {
 		else if (vars.check) vars.currentMove += "+";
 		if (!vars.turn) vars.moveRecord.push([vars.currentMove]);
 		else vars.moveRecord[vars.moveRecord.length - 1].push(vars.currentMove);
-
 	}
 	vars.positionHistory[vars.currentPosition].board = vars.board;
 	vars.positionHistory[vars.currentPosition].move = vars.currentMove;
-	threeFoldRept.push(vars.board);
 	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
 	set.all(vars);
 	getEval();
@@ -653,22 +655,20 @@ export function moveTo(i: any, piecex: any) {
 	let nextPos = timeline + "-" + curMove;
 	if (vars.positionHistory[vars.currentPosition].next == null) {
 		vars.positionHistory[vars.currentPosition].next = nextPos;
-		vars.timelineMoves[timeline][1] +=1;
-	}else{
-		while(vars.positionHistory[nextPos]){
-			if(vars.positionHistory[nextPos].board!=vars.board){
-				timeline+=1
+		vars.timelineMoves[timeline][1] += 1;
+	} else {
+		while (vars.positionHistory[nextPos]) {
+			if (vars.positionHistory[nextPos].board != vars.board) {
+				timeline += 1;
 				nextPos = timeline + "-" + curMove;
-			}
-			else{
-
+			} else {
 				break;
 			}
 		}
-		vars.timelineMoves.push([curMove,curMove]);
+		vars.timelineMoves.push([curMove, curMove]);
 	}
-	
-	vars.positionHistory[nextPos] = {
+
+	let tempMove = {
 		pieceKeys: vars.pieceKeys,
 		fiftyMove: vars.fiftyMove,
 		enpassant: vars.enpassant,
@@ -684,17 +684,41 @@ export function moveTo(i: any, piecex: any) {
 		previous: vars.currentPosition,
 		next: null,
 	};
-	// if(timeline!=0)mv=""
-	vars.currentPosition = nextPos;
-	if (!vars.promoting) {
-		vars = postMoveActions(vars, mv);
+	let filtered = Object.keys(vars.positionHistory).filter(
+		(x: any) =>
+			vars.positionHistory[x].previous == tempMove.previous &&
+			vars.positionHistory[x].board == tempMove.board
+	);
+	let skip = false;
+	if (filtered.length > 0) {
+		if (!vars.promoting) {
+			vars = postMoveActions(vars, mv);
+		} else {
+			vars.currentMove = timeline == 0 ? mv : null;
+		}
+		setData(vars.enpassant, vars.castling);
+		vars.pc = "-1";
+		set.all(vars);
+		updatePosition(
+			filtered[0],
+			true
+		);
+		skip = true;
 	} else {
-		vars.currentMove = timeline == 0 ? mv : null;
+		vars.positionHistory[nextPos] = tempMove;
+		// if(timeline!=0)mv=""
+		vars.currentPosition = nextPos;
+		if (!vars.promoting) {
+			vars = postMoveActions(vars, mv);
+		} else {
+			vars.currentMove = timeline == 0 ? mv : null;
+		}
+		setData(vars.enpassant, vars.castling);
+		vars.pc = "-1";
+		set.all(vars);
 	}
-	setData(vars.enpassant, vars.castling);
-	vars.pc = "-1";
-	set.all(vars);
-	if (!vars.promoting) getEval();
+
+	if (!vars.promoting && !skip) getEval();
 	setTimeout(() => {
 		let mvr = document.getElementById("moveRecord");
 		mvr?.scrollTo({
@@ -703,4 +727,48 @@ export function moveTo(i: any, piecex: any) {
 		});
 	}, 0);
 	return true;
+}
+export function updatePosition(
+	position: any,
+	
+	moveNext = false
+) {
+	let positionHistory = get.positionHistory();
+	let data = positionHistory[position];
+	let playOptions = get.playOptions();
+	let px = document.getElementById(data.pieceId);
+	if (px) {
+		px.style.transitionDuration = "0.2s";
+	}
+	set.pieceKeys(data.pieceKeys);
+	set.fiftyMove(data.fiftyMove);
+	set.enpassant(data.enpassant);
+	set.castling(data.castling);
+	set.turn(data.turn);
+	set.board(data.board);
+
+	let newPos = moveNext ? data.next : data.previous;
+
+	if (
+		((data.turn && playOptions.playAsWhiteAI) ||
+			(!data.turn && playOptions.playAsBlackAI)) &&
+		newPos != null
+	) {
+		updatePosition(
+			newPos
+			
+		);
+	} else {
+		set.currentPosition(position);
+		set.from(data.from);
+		set.to(data.to);
+		set.capturedPieces(data.capturedPieces);
+		set.sel(-1);
+		postMoveActions(get.all(), "");
+		if (data.next == null) getEval();
+		set.thinking(false);
+		set.all(postMoveActions(get.all(), ""));
+
+	}
+	 get.updater()((prev: any) => prev + 1);
 }
