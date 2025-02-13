@@ -176,7 +176,7 @@ function Board({ setUpdate }: any) {
 	return (
 		<>
 			<div
-				className="flex mts w-[75vmin] h-[75vmin] fixed items-center justify-center flex-col"
+				className="fixed flex mts w-full h-full items-center justify-center flex-col"
 				style={{
 					transform: flipBoard ? "rotate(180deg)" : "",
 				}}>
