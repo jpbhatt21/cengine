@@ -2,7 +2,11 @@ import { theme } from "./theme";
 import { get, set } from "./variables";
 import Board from "./Board";
 import { useEffect, useState } from "react";
-import { getEval, performSuggestedMove, updatePosition } from "./helperFunctions";
+import {
+	getEval,
+	performSuggestedMove,
+	updatePosition,
+} from "./helperFunctions";
 getEval();
 function filter(obj: any, predicate: any) {
 	for (let key in obj) {
@@ -13,9 +17,10 @@ function filter(obj: any, predicate: any) {
 	return obj;
 }
 function getAltMoveList(arr2: any, halfMove: number) {
-	let arr = arr2.map((x:any,i:any) => {
+	let arr = arr2.map((x: any, i: any) => {
 		let alts = [];
-		let move =" "+
+		let move =
+			" " +
 			(halfMove % 2 == 0
 				? Math.floor((halfMove - 1) / 2) + 1 + ". ... "
 				: "");
@@ -34,48 +39,49 @@ function getAltMoveList(arr2: any, halfMove: number) {
 		}
 		return (
 			<div className="flex w-full flex-col items-end gap-1">
-				<div className="w-full flex flex-wrap  text-[calc((50vw-37.5vmin)*2/80)]"
-				style={{
-					border: "1px solid " + theme.pieceOutline,
-				}}
-				>
-					{move.split("~").map((x,j:any) => (
+				<div
+					className="w-full flex flex-wrap  text-[calc((50vw-37.5vmin)*2/80)]"
+					style={{
+						border: "1px solid " + theme.pieceOutline,
+					}}>
+					{move.split("~").map((x, j: any) => (
 						<div
 							className="  flex gap-1 p-1  "
 							style={{
 								border: "1px solid " + theme.pieceOutline,
-							}}
-							>
-							{x.trim().split(" ").map((y,k:any) => (
-								<label
-									className="p-[2px]"
-									onClick={() => {
-										if(k!==0){
-											
-											let key=arr2[i][j*2+k-1][0].key;
-											updatePosition(
-												key,
-												true
-											)
-										}
-									}}
-									style={{
-										backgroundColor: y.includes("|||")
-											? theme.whiteBoard
-											: "",
-									}}>
-									{y.replace("|||", "")}
-								</label>
-							))}
+							}}>
+							{x
+								.trim()
+								.split(" ")
+								.map((y, k: any) => (
+									<label
+										className="p-[2px]"
+										onClick={() => {
+											if (k !== 0) {
+												let key =
+													arr2[i][j * 2 + k - 1][0]
+														.key;
+												updatePosition(key, true);
+											}
+										}}
+										style={{
+											backgroundColor: y.includes("|||")
+												? theme.whiteBoard
+												: "",
+										}}>
+										{y.replace("|||", "")}
+									</label>
+								))}
 						</div>
 					))}
 				</div>
-				{alts&&alts.length>0&&alts.map((y: any) => (
-					<label
-						className="text-[calc((50vw-37.5vmin)*2/80)] w-11/12">
-						{getAltMoveList(y.alt, halfMove + y.ind)}
-					</label>
-				))}
+				{alts &&
+					alts.length > 0 &&
+					alts.map((y: any) => (
+						<label className="text-[calc((50vw-37.5vmin)*2/80)] w-11/12">
+							{getAltMoveList(y.alt, halfMove + y.ind)}
+						</label>
+					))}
 			</div>
 		);
 	});
@@ -83,10 +89,8 @@ function getAltMoveList(arr2: any, halfMove: number) {
 }
 function createMoveRecord() {
 	let positionHistory = get.positionHistory();
-	// console.log(positionHistory);
 	let keys = Object.keys(positionHistory);
 	let curPos = get.currentPosition();
-	// console.log(curPos);
 	let mvr: any = {
 		"0-0": {
 			move: "0-0",
@@ -103,7 +107,10 @@ function createMoveRecord() {
 			mvr[pos.previous].nx = keys[i];
 		}
 		mvr[keys[i]] = {
-			move: {move:(curPos == keys[i] ? "|||" : "") + pos.move,key:keys[i]},
+			move: {
+				move: (curPos == keys[i] ? "|||" : "") + pos.move,
+				key: keys[i],
+			},
 			alt: [],
 			next: pos.next ? [pos.next] : [],
 			nx: null,
@@ -122,7 +129,7 @@ function createMoveRecord() {
 		key = key[key.length - 1];
 		let pos = mvr[key];
 		let prev = mvr[pos.prev];
-		if(!prev) break;
+		if (!prev) break;
 		if (prev.next[0] == key) {
 			prev.next = [
 				[pos.move, ...pos.alt],
@@ -174,11 +181,10 @@ function App() {
 
 	return (
 		<>
-			<div className="fixed flex mts w-full h-full items-center justify-center flex-col">
-				<Board setUpdate={setUpdate} />
-				<div className=" fixed pointer-events-none flex flex-col justify-center items-center w-[2.5vmin] h-[75vmin] pr-[42.5vmin] right-1/2 ">
+			<div className="fixed flex mts w-full h-full gap-1 items-center justify-center flex-wrap ">
+				<div className="  pointer-events-none flex flex-col justify-center items-center fixed w-[2.5vmin] h-[75vmin] left-[calc(50vw-42vmin)]  ">
 					<div
-						className="h-full w-[2.5vmin] flex border-2 flex-col-reverse"
+						className="h-full w-[2.5vmin]  flex border-2 flex-col-reverse"
 						style={{
 							backgroundColor: theme.blackPiece,
 							borderColor: theme.whitePiece,
@@ -223,35 +229,10 @@ function App() {
 							: eva}
 					</div>
 				</div>
-				<div
-					className="fixed w-[75vmin] aspect-square flex-col bg-black bg-opacity-20 flex items-center justify-center text-[7vmin] lexend duration-500 pointer-events-none"
-					style={{
-						zIndex: 2147483647,
-						color: theme.move,
-						opacity: noMoveAvailable || tfr || insuff ? 1 : 0,
-					}}>
-					{(noMoveAvailable || tfr || insuff) && (
-						<>
-							<label className="flyin">
-								{check
-									? "Checkmate"
-									: tfr
-									? "Threefold Repetion"
-									: insuff
-									? "Insufficient Material"
-									: "Stalemate"}
-							</label>
-							<label className="flyin text-[4vmin]">
-								{check && !tfr && !insuff
-									? turn
-										? "Black Won"
-										: "White Won"
-									: "Draw"}
-							</label>
-						</>
-					)}
-				</div>
-				<div className=" fixed pointer-events-none flex flex-col items-center justify-center w-[50vw] h-[75vmin] pl-[37.5vmin] left-1/2 ">
+				<div className="w-[calc(50vw+37.5vmin)] h-[75vmin]"></div>
+				<Board setUpdate={setUpdate} />
+
+				<div className="  pointer-events-none flex flex-col min-w-[350px] items-center justify-center w-[calc(50vw-38vmin)] h-[75vmin] ">
 					<div
 						id="moveRecord"
 						className="w-2/3 h-2/3 border-[1px] rounded-sm overflow-scroll pointer-events-auto flex flex-col items-center "
@@ -306,21 +287,23 @@ function App() {
 															  theme.pieceOutline
 															: "",
 													backgroundColor:
-														y[0].move.includes("|||")
+														y[0].move.includes(
+															"|||"
+														)
 															? theme.whiteBoard
-															:"",
+															: "",
 													borderBottom:
-														x[0].length>1||(x.length>1&&x[1].length>1)
+														x[0].length > 1 ||
+														(x.length > 1 &&
+															x[1].length > 1)
 															? "1px solid " +
 															  theme.pieceOutline
 															: "",
 												}}
 												className="w-[50%] fadein py-1  text-center"
 												onClick={() => {
-													let key=y[0].key;
-													updatePosition(
-														key,
-														true)
+													let key = y[0].key;
+													updatePosition(key, true);
 												}}
 												key={"move" + i + j}>
 												{y[0].move.replace("|||", "")}
@@ -362,6 +345,34 @@ function App() {
 								backgroundColor: theme.sel,
 							}}></div>
 					</div>
+				</div>
+				<div
+					className="fixed w-[75vmin] aspect-square flex-col bg-black bg-opacity-20 flex items-center justify-center text-[7vmin] lexend duration-500 pointer-events-none"
+					style={{
+						zIndex: 2147483647,
+						color: theme.move,
+						opacity: noMoveAvailable || tfr || insuff ? 1 : 0,
+					}}>
+					{(noMoveAvailable || tfr || insuff) && (
+						<>
+							<label className="flyin">
+								{check
+									? "Checkmate"
+									: tfr
+									? "Threefold Repetion"
+									: insuff
+									? "Insufficient Material"
+									: "Stalemate"}
+							</label>
+							<label className="flyin text-[4vmin]">
+								{check && !tfr && !insuff
+									? turn
+										? "Black Won"
+										: "White Won"
+									: "Draw"}
+							</label>
+						</>
+					)}
 				</div>
 				<div className="fixed gap-1 flex flex-col top-1 left-1">
 					<div className="flex gap-1">

@@ -5,8 +5,8 @@ export const theme = {
 	whitePiece: "#4c4c4c",
 	pieceOutline: "#393939",
 	move: "#808080",
-	text:"#c0c0c0",
-    sel:"#202020"
+	text: "#c0c0c0",
+	sel: "#202020",
 };
 export const pieces = {
 	"00": (props: any) => {

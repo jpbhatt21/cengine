@@ -1,3 +1,5 @@
+import { get } from "./variables";
+
 const pieceDict: {
 	[key: string]: (
 		k: any,
@@ -15,18 +17,7 @@ const pieceDict: {
 	q: queenMoves,
 	k: kingMoves,
 };
-let enpassant = [-1, -1];
-let castling = [true, true, true, true];
-export function setData(
 
-	enp: number[],
-	cast: boolean[],
-
-) {
-	enpassant = enp;
-	castling = cast;
-	
-}
 function deepCopy(arr: any) {
 	return JSON.parse(JSON.stringify(arr));
 }
@@ -35,8 +26,7 @@ function flatten(arr: any) {
 }
 
 export function moveManager(k: any, board: any, turn: boolean) {
-	if(k==-1)
-		return
+	if (k == -1) return;
 	let piece = board[k];
 	let pieceColor = piece >= "a";
 	if (turn !== pieceColor) return;
@@ -78,6 +68,10 @@ function pawnMoves(
 	turn: boolean,
 	main: boolean
 ) {
+	let enpassant = [-1, -1];
+	try {
+		enpassant = get.enpassant();
+	} catch {}
 	let temp = deepCopy(board);
 	let tb = "-";
 	let moves = [];
@@ -108,7 +102,9 @@ function pawnMoves(
 		j + 1 < 8 &&
 		i + direction < 8 &&
 		(enemy[i + direction][j + 1] ||
-			(enpassant[0] == i + direction && enpassant[1] == j + 1&&enemy[i][j+1]))
+			(enpassant[0] == i + direction &&
+				enpassant[1] == j + 1 &&
+				enemy[i][j + 1]))
 	) {
 		temp[i + direction][j + 1] = temp[i][j];
 		temp[i][j] = "-";
@@ -120,7 +116,9 @@ function pawnMoves(
 		j - 1 >= 0 &&
 		i + direction < 8 &&
 		(enemy[i + direction][j - 1] ||
-			(enpassant[0] == i + direction && enpassant[1] == j - 1&&enemy[i][j-1]))
+			(enpassant[0] == i + direction &&
+				enpassant[1] == j - 1 &&
+				enemy[i][j - 1]))
 	) {
 		temp[i + direction][j - 1] = temp[i][j];
 		temp[i][j] = "-";
@@ -271,6 +269,10 @@ function kingMoves(
 	turn: boolean,
 	main: boolean
 ) {
+	let castling = [true, true, true, true];
+	try {
+		castling = get.castling();
+	} catch {}
 	let moves = [];
 	let moveable = enemy.map((x: any, i: any) =>
 		x.map((y: any, j: any) => y || empty[i][j])
@@ -307,10 +309,9 @@ function kingMoves(
 		castling[turn ? 1 : 3] &&
 		empty[i][j + 1] &&
 		empty[i][j + 2] &&
-		board[i][j + 3].toLowerCase() == "r"
-		&& moves.indexOf(i * 8 + j + 1) != -1
-	) {	
-		
+		board[i][j + 3].toLowerCase() == "r" &&
+		moves.indexOf(i * 8 + j + 1) != -1
+	) {
 		tb = temp[i][j + 2];
 		temp[i][j + 2] = temp[i][j];
 		temp[i][j] = "-";
@@ -326,8 +327,8 @@ function kingMoves(
 			empty[i][j - 1] &&
 			empty[i][j - 2] &&
 			empty[i][j - 3] &&
-			board[i][j - 4].toLowerCase() == "r"
-			&& moves.indexOf(i * 8 + j - 1) != -1
+			board[i][j - 4].toLowerCase() == "r" &&
+			moves.indexOf(i * 8 + j - 1) != -1
 		) {
 			temp[i][j - 2] = temp[i][j];
 			temp[i][j] = "-";
@@ -354,10 +355,10 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 	);
 	let noMoveAvailable = 0;
 	for (let i = 0; i < 64; i++) {
-		let mv=[]
+		let mv = [];
 		if (board[i] == "-") continue;
 		if (turn && board[i] >= "a") {
-			mv= pieceDict[board[i].toLowerCase()](
+			mv = pieceDict[board[i].toLowerCase()](
 				i,
 				boardMatrix,
 				enemyPieces,
@@ -374,14 +375,14 @@ export function checkForAvailableMoves(board: any, turn: boolean) {
 				emptySpaces,
 				turn,
 				true
-			)
+			);
 			noMoveAvailable += mv.length;
 		}
 		if (noMoveAvailable > 0) {
-			break
+			break;
 		}
 	}
-	return noMoveAvailable==0;
+	return noMoveAvailable == 0;
 }
 
 export function checkForCheck(board: any, turn: boolean) {

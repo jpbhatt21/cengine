@@ -2,7 +2,6 @@ import {
 	checkForAvailableMoves,
 	checkForCheck,
 	moveManager,
-	setData,
 } from "./PieceMoves";
 import { get, set } from "./variables";
 let temp = false;
@@ -377,6 +376,9 @@ export function boardPositionToGlobalPosition(k: number) {
 		zIndex: k == from || temp ? 3 : 0,
 	};
 }
+export function deepCopy(x: any) {
+	return JSON.parse(JSON.stringify(x));
+}
 export function clearPieces(def: boolean = true) {
 	let allPieces = document.getElementById("allPieces")?.children;
 	for (let j = 0; allPieces && j < allPieces?.length; j++) {
@@ -387,18 +389,20 @@ export function clearPieces(def: boolean = true) {
 	}
 	set.clearAllTD(null);
 }
-export function checkForThreeFoldRept(currentPosition: any,positionHistory: any) {
+export function checkForThreeFoldRept(
+	currentPosition: any,
+	positionHistory: any
+) {
 	let count = 0;
 	let board = positionHistory[currentPosition].board;
-	while(currentPosition!=null){
-		if(positionHistory[currentPosition].board==board){
+	while (currentPosition != null) {
+		if (positionHistory[currentPosition].board == board) {
 			count++;
 		}
-		currentPosition=positionHistory[currentPosition].previous;
-		
+		currentPosition = positionHistory[currentPosition].previous;
 	}
-	
-	return count>=3;
+
+	return count >= 3;
 }
 export function checkForInsufficientMaterial(board: any) {
 	let whiteBishopCount = 0;
@@ -443,7 +447,10 @@ export function postMoveActions(vars: any, mv: any) {
 		vars.positionHistory[vars.currentPosition].move = mv;
 	}
 	// }
-	vars.threeFoldReptition = checkForThreeFoldRept(vars.currentPosition,vars.positionHistory);
+	vars.threeFoldReptition = checkForThreeFoldRept(
+		vars.currentPosition,
+		vars.positionHistory
+	);
 	vars.insufficientMaterial = checkForInsufficientMaterial(vars.board);
 	return vars;
 }
@@ -671,8 +678,8 @@ export function moveTo(i: any, piecex: any) {
 	let tempMove = {
 		pieceKeys: vars.pieceKeys,
 		fiftyMove: vars.fiftyMove,
-		enpassant: vars.enpassant,
-		castling: vars.castling,
+		enpassant: deepCopy(vars.enpassant),
+		castling: deepCopy(vars.castling),
 		turn: vars.turn,
 		board: vars.board,
 		pieceId: piecex.id,
@@ -696,13 +703,9 @@ export function moveTo(i: any, piecex: any) {
 		} else {
 			vars.currentMove = timeline == 0 ? mv : null;
 		}
-		setData(vars.enpassant, vars.castling);
 		vars.pc = "-1";
 		set.all(vars);
-		updatePosition(
-			filtered[0],
-			true
-		);
+		updatePosition(filtered[0], true);
 		skip = true;
 	} else {
 		vars.positionHistory[nextPos] = tempMove;
@@ -713,7 +716,6 @@ export function moveTo(i: any, piecex: any) {
 		} else {
 			vars.currentMove = timeline == 0 ? mv : null;
 		}
-		setData(vars.enpassant, vars.castling);
 		vars.pc = "-1";
 		set.all(vars);
 	}
@@ -730,7 +732,7 @@ export function moveTo(i: any, piecex: any) {
 }
 export function updatePosition(
 	position: any,
-	
+
 	moveNext = false
 ) {
 	let positionHistory = get.positionHistory();
@@ -740,12 +742,6 @@ export function updatePosition(
 	if (px) {
 		px.style.transitionDuration = "0.2s";
 	}
-	set.pieceKeys(data.pieceKeys);
-	set.fiftyMove(data.fiftyMove);
-	set.enpassant(data.enpassant);
-	set.castling(data.castling);
-	set.turn(data.turn);
-	set.board(data.board);
 
 	let newPos = moveNext ? data.next : data.previous;
 
@@ -754,11 +750,14 @@ export function updatePosition(
 			(!data.turn && playOptions.playAsBlackAI)) &&
 		newPos != null
 	) {
-		updatePosition(
-			newPos
-			
-		);
+		updatePosition(newPos);
 	} else {
+		set.pieceKeys(data.pieceKeys);
+		set.fiftyMove(data.fiftyMove);
+		set.enpassant(data.enpassant);
+		set.castling(data.castling);
+		set.turn(data.turn);
+		set.board(data.board);
 		set.currentPosition(position);
 		set.from(data.from);
 		set.to(data.to);
@@ -768,7 +767,6 @@ export function updatePosition(
 		if (data.next == null) getEval();
 		set.thinking(false);
 		set.all(postMoveActions(get.all(), ""));
-
 	}
-	 get.updater()((prev: any) => prev + 1);
+	get.updater()((prev: any) => prev + 1);
 }

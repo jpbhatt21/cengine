@@ -37,7 +37,11 @@ function Board({ setUpdate }: any) {
 	useEffect(() => {
 		document.addEventListener("mousemove", (e) => {
 			let piece = document.getElementById(get.pc());
-			if (!piece||(get.turn()&&!get.playOptions().playAsWhite)||(!get.turn()&&!get.playOptions().playAsBlack)) {
+			if (
+				!piece ||
+				(get.turn() && !get.playOptions().playAsWhite) ||
+				(!get.turn() && !get.playOptions().playAsBlack)
+			) {
 				return;
 			}
 			if (get.md()) {
@@ -103,7 +107,7 @@ function Board({ setUpdate }: any) {
 			}, 500);
 			set.clearAllTD(clearAllTD);
 		});
-		
+
 		document.addEventListener("keydown", (e) => {
 			let positionHistory = get.positionHistory();
 			let currentPosition = get.currentPosition();
@@ -114,9 +118,7 @@ function Board({ setUpdate }: any) {
 					set.thinking(true);
 					setUpdate((prev: any) => prev + 1);
 					setMoveableSquares(new Array(64).fill(0));
-					updatePosition(
-						prevPos,
-					);
+					updatePosition(prevPos);
 				}
 			}
 			if (e.code == "ArrowRight") {
@@ -125,42 +127,47 @@ function Board({ setUpdate }: any) {
 					set.thinking(true);
 					setUpdate((prev: any) => prev + 1);
 					setMoveableSquares(new Array(64).fill(0));
-					updatePosition(
-						nextPos,
-						true
-					);
+					updatePosition(nextPos, true);
 				}
 			}
-			if(e.code=="KeyF"){
-				flipBoard=!flipBoard;
+			if (e.code == "KeyF") {
+				flipBoard = !flipBoard;
 			}
 		});
 		document.addEventListener("keyup", (e) => {
 			let playOptions = get.playOptions();
-			if(e.key=="1"){
-				playOptions.playAsWhite=!playOptions.playAsWhite;
+			if (e.key == "1") {
+				playOptions.playAsWhite = !playOptions.playAsWhite;
 			}
-			if(e.key=="q"){
-				playOptions.playAsBlack=!playOptions.playAsBlack;
+			if (e.key == "q") {
+				playOptions.playAsBlack = !playOptions.playAsBlack;
 			}
-			if(e.key=="3"){
-				playOptions.playAsWhiteAI=!playOptions.playAsWhiteAI;
+			if (e.key == "3") {
+				playOptions.playAsWhiteAI = !playOptions.playAsWhiteAI;
 			}
-			if(e.key=="e"){
-				playOptions.playAsBlackAI=!playOptions.playAsBlackAI;
+			if (e.key == "e") {
+				playOptions.playAsBlackAI = !playOptions.playAsBlackAI;
 			}
-			if(e.key=="2"){
-				playOptions.showWhiteSuggestedMove=!playOptions.showWhiteSuggestedMove;
+			if (e.key == "2") {
+				playOptions.showWhiteSuggestedMove =
+					!playOptions.showWhiteSuggestedMove;
 			}
-			if(e.key=="w"){
-				playOptions.showBlackSuggestedMove=!playOptions.showBlackSuggestedMove;
+			if (e.key == "w") {
+				playOptions.showBlackSuggestedMove =
+					!playOptions.showBlackSuggestedMove;
 			}
-			if(((playOptions.playAsWhiteAI||playOptions.showWhiteSuggestedMove)&&turn)||((playOptions.playAsBlackAI||playOptions.showBlackSuggestedMove)&&!turn)){
+			if (
+				((playOptions.playAsWhiteAI ||
+					playOptions.showWhiteSuggestedMove) &&
+					turn) ||
+				((playOptions.playAsBlackAI ||
+					playOptions.showBlackSuggestedMove) &&
+					!turn)
+			) {
 				getEval();
 				set.mvSq(new Array(64).fill(0));
 				set.sel(-1);
 				setMoveableSquares(new Array(64).fill(0));
-
 			}
 			set.playOptions(playOptions);
 			setUpdate((prev: any) => prev + 1);
@@ -169,7 +176,7 @@ function Board({ setUpdate }: any) {
 	return (
 		<>
 			<div
-				className="fixed flex mts w-full h-full items-center justify-center flex-col"
+				className="flex mts w-[75vmin] h-[75vmin] fixed items-center justify-center flex-col"
 				style={{
 					transform: flipBoard ? "rotate(180deg)" : "",
 				}}>
@@ -340,13 +347,18 @@ function Board({ setUpdate }: any) {
 							className=" pointer-events-none  duration-500 transition-opacity"
 							// key={get.bestMove() + " " + get.moveRecord().length}
 							style={{
-								opacity: thinking||(turn && !playOptions.showWhiteSuggestedMove) || (!turn && !playOptions.showBlackSuggestedMove)
-									? 0
-									: get.positionHistory()[
-											get.currentPosition()
-									  ].next != null
-									? 0.25
-									: 0.75,
+								opacity:
+									thinking ||
+									(turn &&
+										!playOptions.showWhiteSuggestedMove) ||
+									(!turn &&
+										!playOptions.showBlackSuggestedMove)
+										? 0
+										: get.positionHistory()[
+												get.currentPosition()
+										  ].next != null
+										? 0.25
+										: 0.75,
 							}}
 							d={getArrowPos(
 								get.positionHistory()[get.currentPosition()]
@@ -374,7 +386,7 @@ function Board({ setUpdate }: any) {
 										]({
 											onMouseDown: (e: any) => {
 												if (promoting) return;
-												
+
 												if (
 													(turn &&
 														playOptions.playAsWhite &&
