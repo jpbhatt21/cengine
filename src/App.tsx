@@ -181,10 +181,11 @@ function App() {
 
 	return (
 		<>
-			<div className="fixed flex mts w-full h-full gap-1 items-center justify-center flex-wrap ">
-				<div className="  pointer-events-none flex flex-col justify-center items-center fixed w-[2.5vmin] h-[75vmin] left-[calc(50vw-42vmin)]  ">
+			<div className="fixed flex mts w-full h-full items-center justify-center flex-col">
+				<Board setUpdate={setUpdate} />
+				<div className=" fixed pointer-events-none flex flex-col justify-center items-center w-[2.5vmin] h-[75vmin] pr-[42.5vmin] right-1/2 ">
 					<div
-						className="h-full w-[2.5vmin]  flex border-2 flex-col-reverse"
+						className="h-full w-[2.5vmin] flex border-2 flex-col-reverse"
 						style={{
 							backgroundColor: theme.blackPiece,
 							borderColor: theme.whitePiece,
@@ -229,10 +230,35 @@ function App() {
 							: eva}
 					</div>
 				</div>
-				<div className="w-[calc(50vw+37.5vmin)] h-[75vmin]"></div>
-				<Board setUpdate={setUpdate} />
-
-				<div className="  pointer-events-none flex flex-col min-w-[350px] items-center justify-center w-[calc(50vw-38vmin)] h-[75vmin] ">
+				<div
+					className="fixed w-[75vmin] aspect-square flex-col bg-black bg-opacity-20 flex items-center justify-center text-[7vmin] lexend duration-500 pointer-events-none"
+					style={{
+						zIndex: 2147483647,
+						color: theme.move,
+						opacity: noMoveAvailable || tfr || insuff ? 1 : 0,
+					}}>
+					{(noMoveAvailable || tfr || insuff) && (
+						<>
+							<label className="flyin">
+								{check
+									? "Checkmate"
+									: tfr
+									? "Threefold Repetion"
+									: insuff
+									? "Insufficient Material"
+									: "Stalemate"}
+							</label>
+							<label className="flyin text-[4vmin]">
+								{check && !tfr && !insuff
+									? turn
+										? "Black Won"
+										: "White Won"
+									: "Draw"}
+							</label>
+						</>
+					)}
+				</div>
+				<div className=" fixed pointer-events-none flex flex-col items-center justify-center w-[50vw] h-[75vmin] pl-[37.5vmin] left-1/2 ">
 					<div
 						id="moveRecord"
 						className="w-2/3 h-2/3 border-[1px] rounded-sm overflow-scroll pointer-events-auto flex flex-col items-center "
@@ -287,23 +313,21 @@ function App() {
 															  theme.pieceOutline
 															: "",
 													backgroundColor:
-														y[0].move.includes(
-															"|||"
-														)
+														y[0].move.includes("|||")
 															? theme.whiteBoard
-															: "",
+															:"",
 													borderBottom:
-														x[0].length > 1 ||
-														(x.length > 1 &&
-															x[1].length > 1)
+														x[0].length>1||(x.length>1&&x[1].length>1)
 															? "1px solid " +
 															  theme.pieceOutline
 															: "",
 												}}
 												className="w-[50%] fadein py-1  text-center"
 												onClick={() => {
-													let key = y[0].key;
-													updatePosition(key, true);
+													let key=y[0].key;
+													updatePosition(
+														key,
+														true)
 												}}
 												key={"move" + i + j}>
 												{y[0].move.replace("|||", "")}
@@ -345,34 +369,6 @@ function App() {
 								backgroundColor: theme.sel,
 							}}></div>
 					</div>
-				</div>
-				<div
-					className="fixed w-[75vmin] aspect-square flex-col bg-black bg-opacity-20 flex items-center justify-center text-[7vmin] lexend duration-500 pointer-events-none"
-					style={{
-						zIndex: 2147483647,
-						color: theme.move,
-						opacity: noMoveAvailable || tfr || insuff ? 1 : 0,
-					}}>
-					{(noMoveAvailable || tfr || insuff) && (
-						<>
-							<label className="flyin">
-								{check
-									? "Checkmate"
-									: tfr
-									? "Threefold Repetion"
-									: insuff
-									? "Insufficient Material"
-									: "Stalemate"}
-							</label>
-							<label className="flyin text-[4vmin]">
-								{check && !tfr && !insuff
-									? turn
-										? "Black Won"
-										: "White Won"
-									: "Draw"}
-							</label>
-						</>
-					)}
 				</div>
 				<div className="fixed gap-1 flex flex-col top-1 left-1">
 					<div className="flex gap-1">
