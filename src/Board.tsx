@@ -157,12 +157,12 @@ function Board({ setUpdate }: any) {
 					!playOptions.showBlackSuggestedMove;
 			}
 			if (
-				((playOptions.playAsWhiteAI ||
+				(((playOptions.playAsWhiteAI ||
 					playOptions.showWhiteSuggestedMove) &&
 					turn) ||
 				((playOptions.playAsBlackAI ||
 					playOptions.showBlackSuggestedMove) &&
-					!turn)
+					!turn))&&!get.thinking()
 			) {
 				getEval();
 				set.mvSq(new Array(64).fill(0));

@@ -59,7 +59,7 @@ function getAltMoveList(arr2: any, halfMove: number) {
 										onClick={() => {
 											if (k !== 0) {
 												let key =
-													arr2[i][j * 2 + k - 1][0]
+													arr2[i][j * 2 + k - (halfMove % 2 == 0?2:1)][0]
 														.key;
 												updatePosition(key, true);
 											}
@@ -178,6 +178,7 @@ function App() {
 	let evamate = get.curEvalMate();
 	let playOptions = get.playOptions();
 	let mvr = createMoveRecord();
+	console.log(mvr)
 
 	return (
 		<>

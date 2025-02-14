@@ -6,9 +6,10 @@ import {
 import { get, set } from "./variables";
 let temp = false;
 export async function getEval() {
+	if(get.noMoveAvailable()||get.threeFoldReptition()||get.insufficientMaterial())return;
 	temp = true;
 	let res = { eval: "", move: "" };
-
+	console.log(getFEN());
 	await fetch("https://cengine.jpbhatt.tech/move", {
 		method: "POST",
 		headers: {
@@ -23,8 +24,11 @@ export async function getEval() {
 	while (JSON.stringify(res) == JSON.stringify({ eval: "", move: "" })) {
 		await new Promise((r) => setTimeout(r, 10));
 	}
-
-	let move = res.move.split("\n");
+	let move:any = [];
+	try{move = res.move.split("\n");}
+	catch(e){
+		console.log(res);
+	}
 	let ev: any = move[0].split(" ");
 	let type = ev[ev.indexOf("score") + 1];
 	let score: any = parseFloat(ev[ev.indexOf("score") + 2]) / 100;
