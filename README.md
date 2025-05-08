@@ -23,6 +23,10 @@
    ```bash
    npm install
    ```
+3. Start the app:
+   ```bash
+   npm run dev
+   ```
 
 ## Usage
 ```bash
