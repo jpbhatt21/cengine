@@ -1,50 +1,47 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![logo](./public/king.svg)](https://chess.jpbhatt.tech/)  
+# Cengine  
 
-Currently, two official plugins are available:
+### A lightweight chess application that lets you play with a friend, face off against the Stockfish engine, or receive real-time move suggestions.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+#### Try cengine [here](https://chess.jpbhatt.tech/).
 
-## Expanding the ESLint configuration
+## Features
+- Two players on the same device take turns on a local board. 
+- Challenge the world’s strongest open-source engine.
+- Toggle hints to see the engine’s best-move recommendations in real time. 
+- Engine position analysis
+- Move history and undo functionality
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Installation
+1. Clone the repo:  
+   ```bash
+   git clone https://github.com/jpbhatt21/cengine.git
+   cd cengine
+   ```
+2. Install dependencies:  
+   ```bash
+   npm install
+   ```
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Usage
+```bash
+npm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Configuration
+Toggle for the following settings:  
+- `1`: toggle white user input
+- `2`: toggle white move suggestions
+- `3`: toggle white engine automove
+- `q`: toggle black user input
+- `w`: toggle black move suggestions
+- `e`: toggle black engine automove
+- `left arrow`: move undo
+- `right arrow`: move redo
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Demo
+![Demo](./public/demo.gif)
+## License
+Distributed under the MIT License.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
