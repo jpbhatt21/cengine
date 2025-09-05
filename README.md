@@ -1,10 +1,10 @@
 
-[![logo](./public/king.svg)](https://chess.jpbhatt.tech/)  
+[![logo](./public/king.svg)](https://chess.bhatt.jp/)  
 # Cengine  
 
 ### A lightweight chess application that lets you play with a friend, face off against the Stockfish engine, or receive real-time move suggestions.
 
-#### Try cengine [here](https://chess.jpbhatt.tech/).
+#### Try cengine [here](https://chess.bhatt.jp/).
 
 ## Features
 - Two players on the same device take turns on a local board. 
