@@ -10,7 +10,7 @@ export async function getEval() {
 	temp = true;
 	let res = { eval: "", move: "" };
 	console.log(getFEN());
-	await fetch("https://cengine.jpbhatt.tech/move", {
+	await fetch("https://cengine.bhatt.jp/move", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
